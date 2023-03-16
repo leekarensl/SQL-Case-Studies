@@ -10,5 +10,6 @@ Danny wants to use the data to answer a few simple questions about his customers
 He plans on using these insights to help him decide whether he should expand the existing customer loyalty program.  Additionally he needs help to generate some basic datasets so his team can easily inspect the data without needing to use SQL.
 
 ## The Data
-Danny has provided a sample of his overall customer data. The 3 key datasets for this case study - sales, menu and members.
+Danny has provided a sample of his overall customer data. The 3 key datasets for this case study are sales, menu and members. Here's a view of the relationship between the 3 tables:
+<br>
 ![Data ERD](DannysDinerERD.png)
