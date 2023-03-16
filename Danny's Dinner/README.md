@@ -44,10 +44,10 @@ C           | 36
 
 ```sql
 SELECT
-   customer_id,
-   COUNT (DISTINCT order_date) AS visit_num_days
- FROM dannys_diner.sales
- GROUP BY customer_id;
+  customer_id,
+  COUNT (DISTINCT order_date) AS visit_num_days
+FROM dannys_diner.sales
+GROUP BY customer_id;
  ```
  **Output**
  customer_id | visit_num_days
@@ -55,4 +55,50 @@ SELECT
 A           | 4
 B           | 6
 C           | 2
+
+**3. What was the first item from the menu purchased by each customer?**  
+
+```sql
+WITH ordered_dish AS( 
+ SELECT
+   sales.customer_id,
+   menu.product_name,
+   ROW_NUMBER() OVER(PARTITION BY sales.customer_id ORDER BY sales.order_date) AS order_rank
+ FROM dannys_diner.sales
+ LEFT JOIN dannys_diner.menu
+   ON sales.product_id = menu.product_id
+GROUP BY sales.customer_id, menu.product_name, sales.order_date
+ )
+ 
+ SELECT
+   customer_id,
+   product_name
+FROM ordered_dish
+WHERE order_rank = 1;
+```
+**Output**
+customer_id | product_name
+----------- | ------------
+A           | curry
+A           | sushi
+B           | curry
+C           | ramen
+
+**4. What is the most purchased item on the menu and how many times was it purchased by all customers?** 
+
+```sql
+SELECT
+   menu.product_name,
+   COUNT(sales.*) AS total_purchased
+FROM dannys_diner.sales
+INNER JOIN dannys_diner.menu
+   ON sales.product_id = menu.product_id
+GROUP BY product_name
+ORDER BY total_purchased DESC
+LIMIT 1;
+```
+**Output**
+product_name | total_purchased
+------------ | -------------------
+ramen        | 8
 
