@@ -11,5 +11,6 @@ He plans on using these insights to help him decide whether he should expand the
 
 ## The Data
 Danny has provided a sample of his overall customer data. The 3 key datasets for this case study are sales, menu and members. Here's a view of the relationship between the 3 tables:
-<br>
+
+
 ![Data ERD](DannysDinerERD.png)
