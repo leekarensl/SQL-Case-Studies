@@ -133,3 +133,36 @@ B           | curry         | 2
 B           | ramen         | 2
 C           | ramen         | 3
 
+**6. Which item was purchased first by the customer after they became a member?**
+
+```sql
+WITH base AS(
+SELECT
+  sales.customer_id,
+  sales.order_date,
+  menu.product_name,
+  RANK() OVER (PARTITION BY sales.customer_id 
+    ORDER BY sales.order_date) AS order_rank
+FROM dannys_diner.sales
+INNER JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+INNER JOIN dannys_diner.members
+  ON sales.customer_id = members.customer_id
+WHERE sales.order_date >= members.join_date
+
+)
+
+SELECT
+  customer_id,
+  order_date,
+  product_name
+FROM base
+WHERE order_rank = 1;
+```
+**Output**
+customer_id | order_date  | product_name
+----------- | ----------- | ------------
+A           | 2021-01-07  | curry
+B           | 2021-01-11  | sushi
+
+
