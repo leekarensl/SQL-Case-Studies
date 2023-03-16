@@ -17,7 +17,7 @@ Danny has provided a sample of his overall customer data. The 3 key datasets for
 
 ![Data ERD](DannysDinerERD.png)
 
-## Danny's questions and the SQL solutions:
+## Danny's questions and my SQL solutions:
 
 **1. What is the total amount each customer spent at the restaurant?**
 
@@ -34,9 +34,25 @@ ORDER BY customer_id;
 ```
 **Output**
 
-customer_id | amount_spent
+customer_id | total_amount_paid
 ----------- | ------------
 A           | 76
 B           | 74
 C           | 36
+
+**2. How many days has each customer visited the restaurant?** 
+
+```sql
+SELECT
+   customer_id,
+   COUNT (DISTINCT order_date) AS visit_num_days
+ FROM dannys_diner.sales
+ GROUP BY customer_id;
+ ```
+ **Output**
+ customer_id | visit_num_days
+----------- | --------------
+A           | 4
+B           | 6
+C           | 2
 
