@@ -102,3 +102,34 @@ product_name | total_purchased
 ------------ | -------------------
 ramen        | 8
 
+**5. Which item was the most popular for each customer?**  
+
+```sql
+WITH customer_order AS(
+SELECT
+  sales.customer_id,
+  menu.product_name,
+  COUNT(sales.product_id) AS total_times_purchased,
+  RANK() OVER (PARTITION BY sales.customer_id ORDER BY COUNT(sales.product_id)DESC) AS order_rank
+FROM dannys_diner.sales
+INNER JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+GROUP BY sales.customer_id, menu.product_name
+)
+
+SELECT
+  customer_id,
+  product_name,
+  total_times_purchased
+FROM customer_order
+WHERE order_rank = 1;
+```
+**Output**
+customer_id | product_name  | total_times_purchase
+----------- | ------------- | ---------------------
+A           | ramen         | 3
+B           | sushi         | 2
+B           | curry         | 2
+B           | ramen         | 2
+C           | ramen         | 3
+
