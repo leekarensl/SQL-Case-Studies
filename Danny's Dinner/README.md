@@ -318,7 +318,7 @@ FROM base
 ORDER BY customer_id, order_date;
 ```
 
-**Bonus Question - Rank all the things - Danny also requires further information about the ranking of customer products but he does not need the ranking for non member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty programme. The output should look like this: **
+**Bonus Question - Rank all the things - Danny also requires further information about the ranking of customer products but he does not need the ranking for non member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty programme. The output should look like this:**
 
 ![Bonus2](Bonus2.png)
 
