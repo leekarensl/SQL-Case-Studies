@@ -290,7 +290,9 @@ customer_id | total_points
 A           | 1020
 B           | 320
 
-**Bonus - Join all the things**
+**Bonus - Join all the things - recreate the basic data tables so that Danny and his team can use to derive insights without needing to join the tables using SQL. They should look like this:
+
+![Bonus1](Bonus1)**
 
 ```sql
 WITH base AS(
