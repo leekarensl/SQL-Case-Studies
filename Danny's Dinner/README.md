@@ -22,6 +22,15 @@ Danny has provided a sample of his overall customer data. The 3 key datasets for
 **1. What is the total amount each customer spent at the restaurant?**
 '''
 SELECT
+  sales.customer_id,
+  SUM(menu.price) AS total_amount_paid
+ FROM
+ 
+ '''
+
+
+'''
+SELECT
 sales.customer_id,
    SUM(menu.price) AS total_amount_paid
 FROM
