@@ -1,3 +1,5 @@
+![Logo](DannysDinerLogo.png)
+
 # Case Study 1 - Danny's Diner
 *This case study is part of the 8 weeks SQL challenge which you can find details [here](https://8weeksqlchallenge.com/)
 
