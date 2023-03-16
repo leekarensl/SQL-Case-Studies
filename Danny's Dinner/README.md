@@ -251,3 +251,99 @@ customer_id | loyalty_points
 B           | 940
 A           | 860
 C           | 360
+
+**10. In the first week after a customer joins the program (including their join date) they earn 2x points on all items, not just sushi - how many points do customer A and B have at the end of January?**  
+
+*Note that the following code was written on the assumption that the customer will only get points when they join the programme*
+
+```sql
+WITH customer_purchase AS(
+SELECT
+  sales.customer_id,
+  sales.order_date,
+  menu.product_name,
+  SUM(menu.price) AS total_price,
+  members.join_date
+FROM
+  dannys_diner.sales
+INNER JOIN dannys_diner.menu
+ON sales.product_id = menu.product_id
+INNER JOIN dannys_diner.members
+ON sales.customer_id = members.customer_id
+WHERE sales.order_date >= members.join_date
+GROUP BY sales.customer_id, sales.order_date, menu.product_name, members.join_date
+)
+
+SELECT
+  customer_id,
+  SUM(CASE WHEN order_date BETWEEN join_date AND join_date + 6 OR product_name = 'sushi' THEN 20 * total_price
+    ELSE 10 * total_price END) AS total_points
+FROM customer_purchase
+WHERE DATE_PART('MONTH', order_date::DATE) = 01
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+
+**Output**
+customer_id | total_points
+----------- | ------------
+A           | 1020
+B           | 320
+
+**Bonus - Join all the things**
+
+```sql
+WITH base AS(
+SELECT
+  sales.customer_id,
+  sales.order_date,
+  menu.product_name,
+  menu.price,
+  members.join_date
+FROM dannys_diner.sales
+LEFT JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+LEFT JOIN dannys_diner.members
+  ON sales.customer_id = members.customer_id
+)
+SELECT
+  customer_id,
+  order_date,
+  product_name,
+  price,
+  CASE WHEN join_date IS NULL OR order_date < join_date THEN 'N' ELSE 'Y' END AS member
+FROM base
+ORDER BY customer_id, order_date;
+```
+
+**Bonus - Rank all the things**
+
+```sql
+WITH base AS(
+SELECT
+  sales.customer_id,
+  sales.order_date,
+  menu.product_name,
+  menu.price,
+  members.join_date,
+  CASE WHEN members.join_date IS NULL OR sales.order_date < members.join_date THEN 'N' ELSE 'Y' END AS member
+FROM dannys_diner.sales
+LEFT JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+LEFT JOIN dannys_diner.members
+  ON sales.customer_id = members.customer_id
+
+)
+
+SELECT
+  customer_id,
+  order_date,
+  product_name,
+  price,
+  member,
+  CASE WHEN member = 'N' THEN null
+  ELSE
+    RANK() OVER (PARTITION BY customer_id, member ORDER BY order_date) END AS ranking
+FROM base
+ORDER BY customer_id, order_date;
+```
