@@ -20,14 +20,23 @@ Danny has provided a sample of his overall customer data. The 3 key datasets for
 ## Danny's questions and the SQL solutions:
 
 **1. What is the total amount each customer spent at the restaurant?**
-```
+
+```sql
 SELECT
-sales.customer_id,
-   SUM(menu.price) AS total_amount_paid
- FROM
-   dannys_diner.sales AS sales
- LEFT JOIN dannys_diner.menu AS menu
-   ON sales.product_id = menu.product_id
+  sales.customer_id,
+  SUM(menu.price) AS total_amount_paid
+FROM
+  dannys_diner.sales AS sales
+LEFT JOIN dannys_diner.menu AS menu
+  ON sales.product_id = menu.product_id
 GROUP BY sales.customer_id
 ORDER BY customer_id;
 ```
+**Output**
+
+customer_id | amount_spent
+----------- | ------------
+A           | 76
+B           | 74
+C           | 36
+
