@@ -290,7 +290,7 @@ customer_id | total_points
 A           | 1020
 B           | 320
 
-**Bonus - Join all the things - recreate the basic data tables so that Danny and his team can use to derive insights without needing to join the tables using SQL. They should look like this:**
+**Bonus Question - Join all the things - recreate the basic data tables so that Danny and his team can use to derive insights without needing to join the tables using SQL. They should look like this:**
 
 ![Bonus1](Bonus1.png)
 
@@ -318,7 +318,10 @@ FROM base
 ORDER BY customer_id, order_date;
 ```
 
-**Bonus - Rank all the things**
+**Bonus Question - Rank all the things - Danny also requires further information about the ranking of customer products but he does not need the ranking for non member purchases so he expects null ranking values for the records when customers are not yet part of the loyalty programme. The output should look like this: **
+
+![Bonus2](Bonus2.png)
+
 
 ```sql
 WITH base AS(
