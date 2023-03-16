@@ -40,6 +40,7 @@ A           | 76
 B           | 74
 C           | 36
 
+
 **2. How many days has each customer visited the restaurant?** 
 
 ```sql
@@ -55,6 +56,7 @@ GROUP BY customer_id;
 A           | 4
 B           | 6
 C           | 2
+
 
 **3. What was the first item from the menu purchased by each customer?**  
 
@@ -84,6 +86,7 @@ A           | sushi
 B           | curry
 C           | ramen
 
+
 **4. What is the most purchased item on the menu and how many times was it purchased by all customers?** 
 
 ```sql
@@ -101,6 +104,7 @@ LIMIT 1;
 product_name | total_purchased
 ------------ | -------------------
 ramen        | 8
+
 
 **5. Which item was the most popular for each customer?**  
 
@@ -132,6 +136,7 @@ B           | sushi         | 2
 B           | curry         | 2
 B           | ramen         | 2
 C           | ramen         | 3
+
 
 **6. Which item was purchased first by the customer after they became a member?**
 
@@ -166,3 +171,83 @@ A           | 2021-01-07  | curry
 B           | 2021-01-11  | sushi
 
 
+**7. Which item was purchased just before the customer became a member?** 
+```sql
+SELECT
+  sales.customer_id,
+  menu.product_name,
+  sales.order_date,
+  RANK() OVER(PARTITION BY sales.customer_id
+    ORDER BY sales.order_date DESC) AS order_rank
+FROM dannys_diner.sales
+INNER JOIN dannys_diner.members
+  ON sales.customer_id = members.customer_id
+INNER JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+WHERE sales.order_date < members.join_date
+)
+
+SELECT DISTINCT
+  customer_id,
+  order_date,
+  product_name
+FROM customer_order
+WHERE order_rank = 1;
+```
+**Output**
+
+customer_id | order_date  | product_name
+----------- | ----------- | ------------
+A           | 2021-01-01  | curry
+A           | 2021-01-01  | sushi
+B           | 2021-01-04  | sushi
+
+**8. What is the total items and amount spent for each member before they became a member?**  
+```sql
+SELECT 
+  sales.customer_id,
+  COUNT (DISTINCT (sales.product_id)) AS total_items,
+  SUM(menu.price) AS total_price
+FROM dannys_diner.sales
+LEFT JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+INNER JOIN dannys_diner.members
+  ON sales.customer_id = members.customer_id
+WHERE sales.order_date < members.join_date
+GROUP BY sales.customer_id;
+```
+**Output**
+customer_id | total_items | total_price
+----------- | ----------- | ------------
+A           | 2           | 25
+B           | 2           | 40
+
+**9. If each $1 spent equates to 10 points and sushi has a 2x points multiplier - how many points would each customer have?**
+
+```sql
+WITH customer_purchase AS (
+SELECT
+  sales.customer_id,
+  menu.product_name,
+  SUM(menu.price) AS total_price
+FROM dannys_diner.sales
+LEFT JOIN dannys_diner.menu
+  ON sales.product_id = menu.product_id
+GROUP BY sales.customer_id, menu.product_name, menu.price
+)
+
+SELECT
+  customer_id,
+  SUM(CASE WHEN (product_name = 'sushi') THEN total_price * 20  ELSE
+    total_price * 10 END) AS loyalty_points
+FROM customer_purchase
+GROUP BY customer_id
+ORDER BY loyalty_points DESC;
+```
+**Output**
+
+customer_id | loyalty_points
+----------- | ------------
+B           | 940
+A           | 860
+C           | 360
