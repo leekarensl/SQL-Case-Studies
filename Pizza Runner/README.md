@@ -17,6 +17,8 @@ Danny is  very aware that data collection was going to be critical for his busin
 
 ## Danny's questions and my SQL solutions:
 
+###Pizza Metrics
+
 **1. How many pizzas were ordered?**
 
 ```sql
