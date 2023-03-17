@@ -40,4 +40,7 @@ FROM pizza_runner.customer_orders;
 ```
 **Output**
 
+count |
+----  |
+10    |
 
