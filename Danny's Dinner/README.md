@@ -270,6 +270,7 @@ INNER JOIN dannys_diner.menu
 ON sales.product_id = menu.product_id
 INNER JOIN dannys_diner.members
 ON sales.customer_id = members.customer_id
+# assumption made that customers will only get loyalty points when they join the programme.
 WHERE sales.order_date >= members.join_date
 GROUP BY sales.customer_id, sales.order_date, menu.product_name, members.join_date
 )
