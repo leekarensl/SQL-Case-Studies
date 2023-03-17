@@ -44,3 +44,22 @@ count |
 ----  |
 10    |
 
+**3. How many successful orders were delivered by each runner?**
+
+```sql
+SELECT
+  runner_id,
+  COUNT(DISTINCT order_id) 
+FROM pizza_runner.runner_orders
+WHERE cancellation IS NULL 
+  OR cancellation NOT IN ('Restaurant Cancellation', 'Customer Cancellation')
+GROUP BY runner_id
+ORDER BY 2 DESC;
+```
+
+**Output**
+runner_id   | count
+----------- | ------------
+1           | 4
+2           | 3
+3           | 1
