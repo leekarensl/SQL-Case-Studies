@@ -16,3 +16,30 @@ Danny is  very aware that data collection was going to be critical for his busin
 ![DataERD](PizzaRunnerERD.png)
 
 ## Danny's questions and my SQL solutions:
+
+**1. How many pizzas were ordered?
+
+```sql
+SELECT
+  COUNT(pizza_id) 
+FROM pizza_runner.customer_orders;
+```
+
+**Output**
+
+count
+-----
+14
+
+**2. How many unique customer orders were made?
+
+```sql
+SELECT
+  COUNT(DISTINCT order_id)
+FROM pizza_runner.customer_orders;
+```
+**Output**
+
+count
+-----
+10
