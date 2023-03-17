@@ -27,9 +27,9 @@ FROM pizza_runner.customer_orders;
 
 **Output**
 
-count
----
-14
+count |
+----  |
+14    |
 
 **2. How many unique customer orders were made?
 
@@ -40,6 +40,4 @@ FROM pizza_runner.customer_orders;
 ```
 **Output**
 
-count
----
-10
+
