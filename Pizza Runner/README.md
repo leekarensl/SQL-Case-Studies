@@ -17,7 +17,7 @@ Danny is  very aware that data collection was going to be critical for his busin
 
 ## Danny's questions and my SQL solutions:
 
-**1. How many pizzas were ordered?
+**1. How many pizzas were ordered?**
 
 ```sql
 SELECT
@@ -31,7 +31,7 @@ count |
 ----  |
 14    |
 
-**2. How many unique customer orders were made?
+**2. How many unique customer orders were made?**
 
 ```sql
 SELECT
