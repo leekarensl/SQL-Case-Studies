@@ -65,3 +65,28 @@ runner_id   | count
 1           | 4
 2           | 3
 3           | 1
+
+**4. How many of each type of pizza was delivered?**
+
+```sql
+SELECT
+  names.pizza_name,
+  COUNT(delivery.*) AS number_ordered
+FROM pizza_runner.runner_orders AS delivery
+INNER JOIN pizza_runner.customer_orders AS orders
+  ON delivery.order_id = orders.order_id
+INNER JOIN pizza_runner.pizza_names AS names
+  ON orders.pizza_id = names.pizza_id
+WHERE delivery.cancellation IS NULL
+  OR delivery.cancellation NOT IN ('Restaurant Cancellation', 'Customer Cancellation')
+GROUP BY names.pizza_name
+ORDER BY number_ordered DESC;
+```
+**Output**
+
+pizza_name          | number_ordered
+---------         | ------------
+Meatloves           | 9
+Vegetarian          | 3
+
+
