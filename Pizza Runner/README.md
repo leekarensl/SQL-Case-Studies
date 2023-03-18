@@ -199,4 +199,26 @@ total_pizza_count  |
 --- |
 1   |
 
+**9. What was the total volume of pizzas ordered for each hour of the day?**
 
+```sql
+SELECT
+  DATE_PART('HOUR', order_time:: TIMESTAMP) AS day_hour,
+  COUNT(*) AS total_pizza_ordered
+FROM pizza_runner.customer_orders
+GROUP BY day_hour
+ORDER BY day_hour;
+```
+
+**Output**
+
+day_hour   |  total_pizza_ordered
+---  | ---
+11   |  1
+13   |  3
+18   |  3
+19   |  1
+21   |  3
+23   |  3
+
+**10. What was the volume of orders for each day of the week?**
