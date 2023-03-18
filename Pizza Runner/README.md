@@ -222,3 +222,21 @@ day_hour   |  total_pizza_ordered
 23   |  3
 
 **10. What was the volume of orders for each day of the week?**
+
+```sql
+SELECT
+  TO_CHAR(order_time, 'Dy') AS day_of_week,
+  COUNT(*) AS total_pizza_ordered
+FROM pizza_runner.customer_orders
+GROUP BY day_of_week, DATE_PART('dow', order_time)
+ORDER BY DATE_PART('dow', order_time);
+```
+
+**Output**
+
+day_of_week  |  total_pizza_ordered
+-- | --
+Sun   |   1
+Mon   |   5
+Fri   |   5
+Sat   |   3
