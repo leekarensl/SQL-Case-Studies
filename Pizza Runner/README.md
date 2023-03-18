@@ -89,4 +89,85 @@ pizza_name          | number_ordered
 Meatloves           | 9
 Vegetarian          | 3
 
+**5. How many Vegetarian and Meatlovers were ordered by each customer?**
+
+```sql
+SELECT
+  orders.customer_id,
+  SUM(CASE WHEN names.pizza_name = 'Vegetarian' THEN 1 ELSE 0 END) AS vegetarian,
+  SUM(CASE WHEN names.pizza_name = 'Meatlovers' THEN 1 ELSE 0 END) AS meatlovers
+FROM pizza_runner.customer_orders AS orders
+INNER JOIN pizza_runner.pizza_names AS names
+  ON orders.pizza_id = names.pizza_id
+GROUP BY
+  orders.customer_id
+ORDER BY customer_id;
+```
+
+**Output**
+
+customer_id   |vegetarian    | meatlovers
+---------     | ----------   | ------------
+101  |  2     | 1
+102  |  2     | 1
+103  |  3     | 1
+104  | 3      | 0
+105  | 0     | 1
+
+**6. What was the maximum number of pizzas delivered in a single order?**
+
+```sql
+SELECT
+  runner.order_id,
+  COUNT(orders.pizza_id) AS pizza_delivered
+FROM pizza_runner.runner_orders AS runner
+INNER JOIN pizza_runner.customer_orders AS orders
+  ON runner.order_id = orders.order_id
+WHERE runner.cancellation IS NULL
+  OR runner.cancellation NOT IN ('Restaurant Cancellation', 'Customer Cancellation')
+GROUP BY runner.order_id
+ORDER BY pizza_delivered DESC
+LIMIT 1;
+```
+**Output**
+
+order_id  |   pizza_delivered
+---- | ---
+4   | 3
+
+**7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?**
+
+```sql
+WITH orders AS(
+SELECT
+  customer_id,
+  order_id,
+  CASE WHEN exclusions IN ('null', '') THEN NULL ELSE exclusions END,
+  CASE WHEN extras IN ('null', '') THEN NULL ELSE extras END
+FROM pizza_runner.customer_orders
+)
+
+SELECT
+  t1.customer_id,
+  SUM(CASE WHEN t1.exclusions IS NULL OR t1.extras IS NULL THEN 1 ELSE 0 END) AS pizza_no_change,
+  SUM(CASE WHEN t1.exclusions is NOT NULL OR t1.extras IS NOT NULL THEN 1 ELSE 0 END) AS pizza_with_change
+FROM
+  orders AS t1
+INNER JOIN pizza_runner.runner_orders AS t2
+  ON t1.order_id = t2.order_id
+  WHERE (t2.cancellation IS NULL OR t2.cancellation NOT IN ('Restaurant Cancellation', 'Customer Cancellation'))
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+
+**Output**
+
+customer_id    |  pizza_no_change   | pizza_with_change
+--- | ---- | ----
+101  |  2  |  0
+102  |  3  |  0
+103  |  3  |  3
+104  | 2   |  2  
+105  | 1  | 1
+
 
