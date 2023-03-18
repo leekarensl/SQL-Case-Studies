@@ -170,4 +170,33 @@ customer_id    |  pizza_no_change   | pizza_with_change
 104  | 2   |  2  
 105  | 1  | 1
 
+**8. How many pizzas were delivered that had both exclusions and extras?**
+
+```sql
+WITH pizza AS(
+  SELECT
+    t1.order_id,
+    t1.pizza_id,
+    t2.cancellation,
+    CASE WHEN t1.exclusions IN ('null', '') THEN NULL ELSE exclusions END,
+    CASE WHEN t1.extras IN ('null', '') THEN NULL ELSE extras END
+  FROM pizza_runner.customer_orders AS t1
+  INNER JOIN pizza_runner.runner_orders AS t2
+  ON t1.order_id = t2.order_id
+)
+
+SELECT
+  COUNT(*) AS total_pizza_count
+FROM pizza
+WHERE cancellation NOT IN ('Restaurant Cancellation', 'Customer Cancellation')
+  AND (exclusions IS NOT NULL AND extras IS NOT NULL);
+
+```
+
+**Output**
+
+total_pizza_count  |
+--- |
+1   |
+
 
