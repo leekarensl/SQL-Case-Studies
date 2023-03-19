@@ -324,3 +324,38 @@ order_id   |  pizza_num.   |  prep_time
 3  | 2   | 21
 10 | 2   | 15
 4  | 3   | 29
+
+**4. What was the average distance travelled for each customer?**
+
+```sql
+WITH cte AS(
+  SELECT DISTINCT
+    orders.customer_id,
+    -- Using REGEXP_MATCHES to find one or more digits, commas and decimal points as 'distance' contains numbers, decimal points and characters
+    -- UNNEST converts the results to a single array
+    UNNEST(REGEXP_MATCHES(runner.distance, '(^[0-9,.]+)'))::NUMERIC AS distance
+  FROM pizza_runner.customer_orders AS orders
+  INNER JOIN pizza_runner.runner_orders AS runner
+    ON orders.order_id = runner.order_id
+  WHERE runner.pickup_time <> 'null'
+)
+
+SELECT
+  customer_id,
+  ROUND(AVG(distance),2)  AS avg_distance
+FROM cte
+GROUP BY customer_id
+ORDER BY customer_id;
+```
+
+**Output**
+
+customer_id   |   avg_distance
+-- | --
+101   |  20.00
+102   |  18.40
+103   |  23.40
+104   |  10.00
+105   |  25.00
+
+
