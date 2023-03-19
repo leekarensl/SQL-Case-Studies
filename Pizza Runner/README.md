@@ -240,3 +240,87 @@ Sun   |   1
 Mon   |   5
 Fri   |   5
 Sat   |   3
+
+----
+
+### Runner and Customer Experience
+
+**1. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)**
+
+```sql
+SELECT
+-- date_trunc function considers Monday as the week start day. 1st Jan 2021 is a Friday. Hence + 4 is added
+  DATE_TRUNC('week', registration_date)::DATE + 4 as week_number,
+  COUNT(*)
+FROM pizza_runner.runners
+GROUP BY week_number
+ORDER BY week_number;
+```
+
+**Output**
+
+week_number   |   count
+-- | --
+2021-01-01     |  2
+2021-01-08     |  1
+2021-01-15     |  1
+
+**2. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?**
+
+```sql
+WITH pickup_time AS (
+-- DISTINCT is used here because there are multiple orders with the same order_id
+SELECT DISTINCT
+  orders.order_id,
+  runner.runner_id,
+-- cast as integer for the rounding later on, pickup_time is VARCHAR so need to cast as TIMESTAMP
+  DATE_PART('minute', AGE(runner.pickup_time::TIMESTAMP, orders.order_time))::INTEGER AS pickup_minutes
+FROM pizza_runner.runner_orders AS runner
+INNER JOIN pizza_runner.customer_orders AS orders
+  ON orders.order_id = runner.order_id
+WHERE runner.pickup_time <> 'null'
+)
+
+SELECT
+  runner_id,
+  ROUND(AVG(pickup_minutes), 2) AS avg_pickup_minutes
+FROM pickup_time
+GROUP BY runner_id
+ORDER BY avg_pickup_minutes;
+```
+
+**Output**
+
+runner_id   |   avg_pickup_minutes
+--  | ---
+3   |  10.00
+1   |  14.00
+2   |  19.67
+
+**3. Is there any relationship between the number of pizzas and how long the order takes to prepare?**
+
+```sql
+SELECT DISTINCT
+  orders.order_id,
+  COUNT(pizza_id) AS pizza_num,
+  DATE_PART('minute', AGE(runner.pickup_time::TIMESTAMP, orders.order_time)) AS prep_time
+FROM pizza_runner.customer_orders AS orders
+INNER JOIN pizza_runner.runner_orders AS runner
+  ON orders.order_id = runner.order_id
+WHERE runner.pickup_time <> 'null'
+GROUP BY orders.order_id, prep_time
+ORDER BY pizza_num;
+```
+
+**Output**
+
+order_id   |  pizza_num.   |  prep_time
+-- | -- | ---
+1  |  1  | 10
+2  |  1  | 10
+5  |  1  | 10
+7  |  1  | 10
+8  |  1  | 20
+3  | 2   | 21
+10 | 2   | 15
+4  | 3   | 29
