@@ -358,4 +358,64 @@ customer_id   |   avg_distance
 104   |  10.00
 105   |  25.00
 
+**5. What was the difference between the longest and shortest delivery times for all orders?**
+
+```sql
+WITH adj_duration AS( 
+  SELECT
+    UNNEST(REGEXP_MATCHES(duration, '(^[0-9,.]+)'))::NUMERIC AS duration
+  FROM pizza_runner.runner_orders
+  WHERE pickup_time <>'null'
+)
+
+SELECT
+  MAX(duration) AS longest_duration,
+  MIN(duration) AS shortest_duration,
+  MAX(duration) - MIN(duration) AS difference
+FROM adj_duration;
+```
+
+**Output**
+
+longest_duration  |  shortest_duration   |  difference
+--- | --- | ---
+40  |  10   |  30
+
+**6. What was the average speed for each runner for each delivery and do you notice any trend for these values?**
+
+```sql
+WITH adj_data AS(
+  SELECT
+    runner_id,
+    order_id,
+    UNNEST(REGEXP_MATCHES(distance, '(^[0-9,.]+)'))::NUMERIC AS distance,
+    UNNEST(REGEXP_MATCHES(duration, '(^[0-9,.]+)'))::NUMERIC AS duration
+  FROM pizza_runner.runner_orders
+  WHERE pickup_time <> 'null'
+)
+
+SELECT
+  runner_id,
+  order_id,
+  distance,
+  duration,
+  ROUND(AVG(distance/(duration / 60)),2) AS avg_speed
+FROM adj_data
+GROUP BY runner_id, order_id, distance, duration
+ORDER BY avg_speed DESC;
+```
+
+**Output**
+
+runner_id    |  order_id  |  distance    |  duration  | avg_speed
+--  | ---  | ---- | -- | ----
+2  |  8   |  23.4   | 15  |  93.60
+2  |  7  |  25  |  25  |  60.00
+1  |  10  | 10  | 10  |  60.00
+1  |  2  | 20   | 27  | 40.44
+1  |  3  | 13.4   |  20  | 40.20
+3  |   5  |  10   |  15  | 40.00
+1  |  1  | 20  | 32  |37.50
+
+
 
