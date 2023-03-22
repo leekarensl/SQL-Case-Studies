@@ -417,5 +417,26 @@ runner_id    |  order_id  |  distance    |  duration  | avg_speed
 3  |   5  |  10   |  15  | 40.00
 1  |  1  | 20  | 32  |37.50
 
+**7. What is the successful delivery percentage for each runner?**
+
+```sql
+SELECT
+  runner_id,
+  100 * SUM(CASE WHEN pickup_time <> 'null' THEN 1 ELSE 0 END) / COUNT(*) AS success_percentage
+FROM pizza_runner.runner_orders
+GROUP BY runner_id
+ORDER BY success_percentage DESC;
+```
+
+**Output**
+
+runner_id  |  success_percentage
+--  | --
+1 | 100
+2 | 75
+3 | 50
+
+---
+### Ingredient Optimisation
 
 
