@@ -650,7 +650,7 @@ order_id  | customer_id | pizza_id  | order_time  | order_item
 5 | 104 | 1 | 2021-01-08 21:00:29 | Meatlovers - Extra Bacon
 6 | 101 | 2 | 2021-01-08 21:03:13 | Vegetarian
 7 | 105 | 2 | 2021-01-08 21:20:29 | Vegetarian - Extra Bacon
-8 | 102 | 1 | 2021-01-09 23:54:33 | Meatlovers 
+8 | 102 | 1 | 2021-01-09 23:54:33 | Meatlovers
 9 | 103 | 1 | 2021-01-10 11:22:59 | Meatlovers - Extra Bacon, Chicken - Exclude Cheese
 10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers 
 10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers - Extra Bacon, Cheese - Exclude BBQ Sauce, Mushrooms
