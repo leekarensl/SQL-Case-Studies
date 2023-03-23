@@ -438,5 +438,224 @@ runner_id  |  success_percentage
 
 ---
 ### Ingredient Optimisation
+**1. What are the standard ingredients for each pizza?**
+
+```sql
+WITH ingredients AS(
+SELECT
+  pizza_id,
+  REGEXP_SPLIT_TO_TABLE(toppings, '[,\s]+')::INTEGER AS topping_id
+FROM pizza_runner.pizza_recipes
+),
+
+pizza_ingredients AS(
+SELECT
+  pizza_id,
+  STRING_AGG(t2.topping_name ::TEXT, ', ') AS standard_ingredients
+FROM ingredients AS t1
+INNER JOIN pizza_runner.pizza_toppings AS t2
+  ON t1.topping_id = t2.topping_id
+GROUP BY pizza_id
+)
+
+SELECT 
+  t3.pizza_name,
+  t4.standard_ingredients
+FROM pizza_runner.pizza_names AS t3
+INNER JOIN pizza_ingredients AS t4
+  ON t3.pizza_id = t4.pizza_id
+GROUP BY pizza_name, standard_ingredients;
+```
+**Output**
+
+pizza_name  | standard_ingredients
+--  | --
+Meatlovers  | Bacon, BBQ Sauce, Beef, Chicken, Mushrooms, Pepperoni, Salami
+Vegetarian  | Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce
+
+**2. What was the most commonly added extra?**
+
+```sql
+WITH cte_extras AS(
+SELECT
+  REGEXP_SPLIT_TO_TABLE(extras, '[,\s]+'):: INTEGER AS topping_id
+FROM pizza_runner.customer_orders
+WHERE extras IS NOT NULL AND extras NOT IN ('null', '')
+)
+
+SELECT
+  topping_name,
+  COUNT(*) AS extras_count
+FROM cte_extras
+INNER JOIN pizza_runner.pizza_toppings
+ON pizza_toppings.topping_id = cte_extras.topping_id
+GROUP BY topping_name
+ORDER BY extras_count DESC
+LIMIT 1;
+```
+
+**Output**
+
+topping_name  | extras_count
+--  | --
+Bacon | 4
+
+**3. What was the most common exclusion?**
+
+```sql
+WITH cte_exclusions AS(
+SELECT
+  REGEXP_SPLIT_TO_TABLE(exclusions, '[,\s]+'):: INTEGER AS topping_id
+FROM pizza_runner.customer_orders
+WHERE exclusions IS NOT NULL AND exclusions NOT IN ('null', '')
+)
+
+SELECT
+  topping_name,
+  COUNT(*) AS exclusion_count
+FROM cte_exclusions
+INNER JOIN pizza_runner.pizza_toppings
+ON pizza_toppings.topping_id = cte_exclusions.topping_id
+GROUP BY topping_name
+ORDER BY exclusion_count DESC
+LIMIT 1;
+```
+
+**Output**
+
+topping_name  | exclusion_count
+--  | --
+Cheese | 4
+
+**4. Generate an order item for each record in the customers_orders table in the format of one of the following:<br>
+Meat Lovers<br>
+Meat Lovers - Exclude Beef<br>
+Meat Lovers - Extra Bacon<br>
+Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers**<br>
+
+```sql
+WITH cte_cleaned_customer_orders AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    CASE
+      WHEN exclusions IN ('', 'null') THEN NULL
+      ELSE exclusions END
+    AS exclusions,
+    CASE
+      WHEN extras IN ('', 'null') THEN NULL
+      ELSE extras END
+    AS extras,
+    order_time,
+    ROW_NUMBER() OVER () AS original_row_number
+  FROM pizza_runner.customer_orders
+),
+
+cte_extras_exclusions AS (
+    SELECT
+      order_id,
+      customer_id,
+      pizza_id,
+      REGEXP_SPLIT_TO_TABLE(exclusions, '[,\s]+')::INTEGER AS exclusions_topping_id,
+      REGEXP_SPLIT_TO_TABLE(extras, '[,\s]+')::INTEGER AS extras_topping_id,
+      order_time,
+      original_row_number
+    FROM cte_cleaned_customer_orders
+    WHERE exclusions IS NOT NULL OR extras IS NOT NULL
+  
+  UNION
+    SELECT
+      order_id,
+      customer_id,
+      pizza_id,
+      NULL AS exclusions_topping_id,
+      NULL AS extras_topping_id,
+      order_time,
+      original_row_number
+    FROM cte_cleaned_customer_orders
+    WHERE exclusions IS NULL OR extras IS NULL
+),
+
+complete_dataset AS(
+SELECT
+  t1.order_id,
+  t1.customer_id,
+  t1.pizza_id,
+  t2.pizza_name,
+  t1.order_time,
+  t1.original_row_number,
+  STRING_AGG(exclusions.topping_name, ', ') AS exclusions,
+  STRING_AGG(extras.topping_name, ', ') AS extras
+FROM cte_extras_exclusions AS t1
+INNER JOIN pizza_runner.pizza_names AS t2
+  ON t1.pizza_id = t2.pizza_id
+LEFT JOIN pizza_runner.pizza_toppings AS exclusions
+  ON t1.exclusions_topping_id = exclusions.topping_id
+LEFT JOIN pizza_runner.pizza_toppings AS extras
+  ON t1.extras_topping_id = extras.topping_id
+GROUP BY
+  t1.order_id,
+  t1.customer_id,
+  t1.pizza_id,
+  t2.pizza_name,
+  t1.order_time,
+  t1.original_row_number
+),
+
+cte_parsed_string_output AS(
+SELECT
+  order_id,
+  customer_id,
+  pizza_id,
+  order_time,
+  original_row_number,
+  pizza_name,
+  CASE WHEN exclusions IS NULL THEN '' ELSE ' - Exclude ' || exclusions END AS exclusions,
+  CASE WHEN extras IS NULL THEN '' ELSE ' - Extra ' || extras END AS extras
+FROM complete_dataset
+),
+
+final_output AS(
+SELECT
+  order_id,
+  customer_id,
+  pizza_id,
+  order_time,
+  original_row_number,
+  pizza_name || extras || exclusions AS order_item
+FROM cte_parsed_string_output
+)
+
+SELECT
+  order_id,
+  customer_id,
+  pizza_id,
+  order_time,
+  order_item
+FROM final_output
+ORDER BY original_row_number;
+```
+**Output**
+
+order_id  | customer_id | pizza_id  | order_time  | order_item
+--  | --  | --  | --  | --
+1 | 101 | 1 | 2021-01-01 18:05:02 | Meatlovers
+2 | 101 | 1 | 2021-01-01 19:00:52 | Meatlovers
+3 | 102 | 1 | 2021-01-02 23:51:23 | Meatlovers
+3 | 102 | 2 | 2021-01_02 23:51:23 | Vegetarian
+4 | 103 | 1 | 2021-01-04 13:23:46 | Meatlovers - Exclude Cheese
+4 | 103 | 1 | 2021-01-04 13:23:46 | Meatlovers - Exclude Cheese
+4 | 103 | 2 | 2021-01-04 13:23:46 | Vegetarian - Exclude Cheese
+5 | 104 | 1 | 2021-01-08 21:00:29 | Meatlovers - Extra Bacon
+6 | 101 | 2 | 2021-01-08 21:03:13 | Vegetarian
+7 | 105 | 2 | 2021-01-08 21:20:29 | Vegetarian - Extra Bacon
+8 | 102 | 1 | 2021-01-09 23:54:33 | Meatlovers 
+9 | 103 | 1 | 2021-01-10 11:22:59 | Meatlovers - Extra Bacon, Chicken - Exclude Cheese
+10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers 
+10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers - Extra Bacon, Cheese - Exclude BBQ Sauce, Mushrooms
+
+
+
 
 
