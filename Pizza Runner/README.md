@@ -912,5 +912,6 @@ Onions  | 3
 Tomatoes  | 3
 Peppers | 3
 
-
+---
+### Pricing and Ratings
 
