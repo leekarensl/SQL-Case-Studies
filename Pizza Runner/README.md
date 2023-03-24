@@ -805,6 +805,112 @@ order_id  | customer_id | pizza_id  | order_time  | pizza_name  | ingredients_li
 10  | 104 | 1 |2021-01-11 18:34:49 | Meatlovers | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 13
 10  | 104 | 1 |2021-01-11 18:34:49 | Meatlovers | 2x Bacon, Beef, 2x Cheese, Chicken, Pepperoni, Salami | 14
 
+**6. What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?**
+
+The answer is similar to Q5 above except that we now have to account only for delivered pizzas. Therefore we joined the customer_orders table with the runner_orders table to filter out the cancellations. This is when the runner pickup_time is null.
+
+```sql
+WITH cleaned_delivered_orders AS (
+  SELECT
+    r.order_id,
+    o.customer_id,
+    o.pizza_id,
+    CASE
+      WHEN exclusions IN ('', 'null') THEN NULL
+      ELSE exclusions END
+    AS exclusions,
+    CASE
+      WHEN extras IN ('', 'null') THEN NULL
+      ELSE extras END
+    AS extras,
+    order_time,
+    ROW_NUMBER() OVER () AS original_row_number
+  FROM pizza_runner.customer_orders AS o
+  INNER JOIN pizza_runner.runner_orders AS r
+    ON o.order_id = r.order_id
+    -- Note that the question says 'delivered pizza'. Therefore we need to account for cancellations and this is when runner pickup_time were nulls.
+    AND r.pickup_time <> 'null'
+),
+    
+cte_regular_toppings AS(
+  SELECT
+    pizza_id,
+    REGEXP_SPLIT_TO_TABLE(toppings, '[,\s]+')::INTEGER AS topping_id
+  FROM pizza_runner.pizza_recipes
+),
+cte_base_toppings AS (
+  SELECT
+    cleaned_delivered_orders.order_id,
+    cleaned_delivered_orders.customer_id,
+    cleaned_delivered_orders.pizza_id,
+    cleaned_delivered_orders.order_time,
+    cleaned_delivered_orders.original_row_number,
+    cte_regular_toppings.topping_id
+  FROM cleaned_delivered_orders
+  LEFT JOIN cte_regular_toppings
+    ON cleaned_delivered_orders.pizza_id = cte_regular_toppings.pizza_id
+),
+
+-- get the exclusions and extras
+cte_exclusions AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    order_time,
+    original_row_number,
+    REGEXP_SPLIT_TO_TABLE(exclusions, '[,\s]+')::INTEGER AS topping_id
+  FROM cleaned_delivered_orders
+  WHERE exclusions IS NOT NULL
+),
+cte_extras AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    order_time,
+    original_row_number,
+    REGEXP_SPLIT_TO_TABLE(extras, '[,\s]+')::INTEGER AS topping_id
+  FROM cleaned_delivered_orders
+  WHERE extras IS NOT NULL
+),
+-- combine the cutomer orders with the extras, excluding the exclusions
+cte_combined_orders AS (
+  SELECT * FROM cte_base_toppings
+  EXCEPT
+  SELECT * FROM cte_exclusions
+  UNION ALL
+  SELECT * FROM cte_extras
+)
+  
+SELECT
+  t2.topping_name,
+  COUNT(t1.*) AS total_topping_used
+FROM cte_combined_orders AS t1
+INNER JOIN pizza_runner.pizza_toppings AS t2
+  ON t1.topping_id = t2.topping_id
+GROUP BY
+  topping_name
+ORDER BY total_topping_used DESC;
+
+```
+
+**Output**
+
+topping_name  | total_topping_used
+--  | --
+Bacon | 12
+Mushrooms | 11
+Cheese  | 10
+Pepperoni | 9
+Chicken | 9
+Salami  | 9
+Beef  | 9
+BBQ Sauce | 8
+Tomato Sauce  | 3
+Onions  | 3
+Tomatoes  | 3
+Peppers | 3
 
 
 
