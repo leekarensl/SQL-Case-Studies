@@ -655,6 +655,155 @@ order_id  | customer_id | pizza_id  | order_time  | order_item
 10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers 
 10 | 104 | 1 | 2021-01-11 18:34:49 | Meatlovers - Extra Bacon, Cheese - Exclude BBQ Sauce, Mushrooms
 
+**5. Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients**
+
+Steps taken can be summarised as follows:
+1. Clean the customer_orders table so that exclusions and extras are correctly reflected with NULL where applicable.
+2. Split the toppings found on pizza_recipes table so that each topping is represented separately as a row
+3. Then join the ouput in step 2 back to the customer_orders table
+4. Work out the customer orders that had exclusions and extras
+5. Combine output in Step 3 with outputs from Step 4 by excluding the exclusions and adding the extras
+6. You can then start counting how many toppings had more than 1 in your combined output in step 5.
+
+```sql
+WITH cte_cleaned_customer_orders AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    CASE
+      WHEN exclusions IN ('', 'null') THEN NULL
+      ELSE exclusions END
+    AS exclusions,
+    CASE
+      WHEN extras IN ('', 'null') THEN NULL
+      ELSE extras END
+    AS extras,
+    order_time,
+    ROW_NUMBER() OVER () AS original_row_number
+  FROM pizza_runner.customer_orders
+),
+-- first split the toppings
+cte_regular_toppings AS (
+SELECT
+  pizza_id,
+  REGEXP_SPLIT_TO_TABLE(toppings, '[,\s]+')::INTEGER AS topping_id
+FROM pizza_runner.pizza_recipes
+),
+-- join the toppings with all pizzas orders
+cte_base_toppings AS (
+  SELECT
+    cte_cleaned_customer_orders.order_id,
+    cte_cleaned_customer_orders.customer_id,
+    cte_cleaned_customer_orders.pizza_id,
+    cte_cleaned_customer_orders.order_time,
+    cte_cleaned_customer_orders.original_row_number,
+    cte_regular_toppings.topping_id
+  FROM cte_cleaned_customer_orders
+  LEFT JOIN cte_regular_toppings
+    ON cte_cleaned_customer_orders.pizza_id = cte_regular_toppings.pizza_id
+),
+-- get the exclusions and extras
+cte_exclusions AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    order_time,
+    original_row_number,
+    REGEXP_SPLIT_TO_TABLE(exclusions, '[,\s]+')::INTEGER AS topping_id
+  FROM cte_cleaned_customer_orders
+  WHERE exclusions IS NOT NULL
+),
+cte_extras AS (
+  SELECT
+    order_id,
+    customer_id,
+    pizza_id,
+    order_time,
+    original_row_number,
+    REGEXP_SPLIT_TO_TABLE(extras, '[,\s]+')::INTEGER AS topping_id
+  FROM cte_cleaned_customer_orders
+  WHERE extras IS NOT NULL
+),
+-- combine the cutomer orders with the extras, excluding the exclusions
+cte_combined_orders AS (
+  SELECT * FROM cte_base_toppings
+  EXCEPT
+  SELECT * FROM cte_exclusions
+  UNION ALL
+  SELECT * FROM cte_extras
+),
+-- count the topping ID and join onto pizza toppings
+cte_joined_toppings AS (
+  SELECT
+    t1.order_id,
+    t1.customer_id,
+    t1.pizza_id,
+    t1.order_time,
+    t1.original_row_number,
+    t1.topping_id,
+    t2.pizza_name,
+    t3.topping_name,
+    COUNT(t1.*) AS topping_count
+  FROM cte_combined_orders AS t1
+  INNER JOIN pizza_runner.pizza_names AS t2
+    ON t1.pizza_id = t2.pizza_id
+  INNER JOIN pizza_runner.pizza_toppings AS t3
+    ON t1.topping_id = t3.topping_id
+  GROUP BY
+    t1.order_id,
+    t1.customer_id,
+    t1.pizza_id,
+    t1.order_time,
+    t1.original_row_number,
+    t1.topping_id,
+    t2.pizza_name,
+    t3.topping_name
+)
+--final output
+SELECT
+  order_id,
+  customer_id,
+  pizza_id,
+  order_time,
+  pizza_name,
+  STRING_AGG(
+    CASE
+      WHEN topping_count > 1 THEN topping_count || 'x ' || topping_name
+      ELSE topping_name
+      END,
+    ', '
+  ) AS ingredients_list,
+  original_row_number
+FROM cte_joined_toppings
+GROUP BY
+  order_id,
+  customer_id,
+  pizza_id,
+  order_time,
+  pizza_name,
+  original_row_number
+ 
+```
+**Output**
+
+order_id  | customer_id | pizza_id  | order_time  | pizza_name  | ingredients_list  | original_row_number
+--  | --  | --  | --  | --  | --  | --  
+1 | 101 | 1 | 2021-01-01 18:05:02 | Meatlovers  | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 1
+2 | 101 | 1 | 2021-01-01 19:00:52 | Meatlovers  | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 2
+3 | 102 | 1 | 2021-01-02 23:51:23 | Meatlovers  | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 3
+3 | 102 | 2 | 2021-01_02 23:51:23 | Vegetarian  | Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce  | 4
+4 | 103 | 1 | 2021-01-04 13:23:46 | Meatlovers  | Bacon, BBQ Sauce, Beef, Chicken, Mushrooms, Pepperoni, Salami | 5
+4 | 103 | 1 | 2021-01-04 13:23:46 | Meatlovers  | Bacon, BBQ Sauce, Beef, Chicken, Mushrooms, Pepperoni, Salami | 6
+4 | 103 | 2 | 2021-01-04 13:23:46 | Vegetarian  | Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce  | 7
+5 | 104 | 1 | 2021-01-08 21:00:29 | Meatlovers  | 2x Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami  |8
+6 | 101 | 2 | 2021-01-08 21:03:13 | Vegetarian  | Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce  | 9
+7 | 105 | 2 | 2021-01-08 21:20:29 | Vegetarian  | Bacon, Cheese, Mushrooms, Onions, Peppers, Tomatoes, Tomato Sauce | 10
+8 | 102 | 1 | 2021-01-09 23:54:33 | Meatlovers  | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 11
+9 | 103 | 1 | 2021-01-10 11:22:59 | Meatlovers  | 2x Bacon, BBQ Sauce, Beef, 2x Chicken, Mushrooms, Pepperoni, Salami | 12
+10  | 104 | 1 |2021-01-11 18:34:49 | Meatlovers | Bacon, BBQ Sauce, Beef, Cheese, Chicken, Mushrooms, Pepperoni, Salami | 13
+10  | 104 | 1 |2021-01-11 18:34:49 | Meatlovers | 2x Bacon, Beef, 2x Cheese, Chicken, Pepperoni, Salami | 14
 
 
 
