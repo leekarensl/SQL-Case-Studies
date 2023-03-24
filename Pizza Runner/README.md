@@ -734,7 +734,7 @@ cte_combined_orders AS (
   UNION ALL
   SELECT * FROM cte_extras
 ),
--- count the topping ID and join onto pizza toppings
+-- count the topping ID from the combined output and obtain pizza and topping names from pizza_names and pizza_toppings tables
 cte_joined_toppings AS (
   SELECT
     t1.order_id,
