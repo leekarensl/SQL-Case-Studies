@@ -915,3 +915,65 @@ Peppers | 3
 ---
 ### Pricing and Ratings
 
+**1. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?** <br>
+
+The solution below is based on revenue from delivered pizzas only so any customer orders cancelled were excluded.
+
+```sql
+WITH orders AS(
+SELECT
+  o.order_id,
+  o.pizza_id,
+  COUNT(*) AS pizza_num
+FROM pizza_runner.customer_orders AS o
+  INNER JOIN pizza_runner.runner_orders AS r
+  ON o.order_id = r.order_id
+  AND r.pickup_time <> 'null'
+GROUP By o.order_id, pizza_id
+)
+
+SELECT
+  SUM(CASE WHEN t2.pizza_name = 'Meatlovers' THEN 12 * pizza_num ELSE 10 * pizza_num END) AS total_revenue
+FROM orders AS t1
+INNER JOIN pizza_runner.pizza_names AS t2
+  ON t1.pizza_id = t2.pizza_id;
+```
+
+**Output**
+
+total_revenue |
+--  |
+160 |
+
+**2. What if there was an additional $1 charge for any pizza extras? For e.g. Add cheese is $1 extra**<br>
+
+Using SUM with COALESCE to sum 2 columns and CARDINALITY to return the number of elements in the array. 
+
+```sql
+WITH cleaned_orders AS(
+SELECT
+  o.order_id,
+  o.pizza_id,
+  n.pizza_name,
+  CASE WHEN exclusions IN ('', 'null') THEN NULL ELSE exclusions END,
+  CASE WHEN extras IN ('', 'null') THEN NULL ELSE extras END,
+  ROW_NUMBER() OVER() AS original_row_number
+FROM pizza_runner.customer_orders AS o
+INNER JOIN pizza_runner.runner_orders AS r
+  ON o.order_id = r.order_id
+  AND r.pickup_time <> 'null'
+INNER JOIN pizza_runner.pizza_names AS n
+  ON o.pizza_id = n.pizza_id
+)
+
+SELECT
+  SUM(COALESCE(
+    CASE WHEN pizza_name = 'Meatlovers' THEN 12 ELSE 10 END) +
+  COALESCE(CARDINALITY(REGEXP_SPLIT_TO_ARRAY(extras, '[,\s]+')),0)) AS total_pizza_costs
+FROM cleaned_orders;
+```
+**Output**
+
+total_pizza_costs
+--  |
+142 |
