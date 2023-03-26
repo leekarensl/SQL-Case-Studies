@@ -1,4 +1,4 @@
-![Logo](Foodie-fi-logo.png)
+![Logo](foodie-fi-logo.png)
 
 # Case Study 3 - Foodie Fi
 *This case study is part of the 8 weeks SQL challenge which you can find details [here](https://8weeksqlchallenge.com/)
@@ -13,7 +13,7 @@ Danny created Foodie-Fi with a data driven mindset and wanted to ensure all futu
 ## Available Data and Business Case
 Danny has shared the data design for Foodie-Fi and also short descriptions on each of the database tables:
 
-![DataERD](Foodie-fi_ERD.png)
+![DataERD](Foodie-fi-ERD.png)
 
 **Table 1: plans**
 Customers can choose which plans to join Foodie-Fi when they first sign up.
