@@ -1023,7 +1023,7 @@ order_id  | rating
 - **customer_id**
 - **order_id**
 - **runner_id**
-- **ating**
+- **rating**
 - **order_time**
 - **pickup_time**
 - **Time between order and pickup**
@@ -1086,6 +1086,94 @@ customer_id | order_id  | runner_id | rating  | order_time  | pickup_tme  | mins
 105 | 7 | 2 | 5 | 2021-01-08 21:20:29.000 | 2021-01-08 21:30:45 | 10  | 25  | 60.0  | 1
 102 | 8 | 2 | 2 | 2021-01-09 23:54:33.000 | 2021-01-10 00:15:02 | 20  | 15  | 93.6  | 1
 104 | 10  | 1 | 3 | 2021-01-11 18:34:49.000 | 2021-01-11 18:50:20 | 15  | 10  | 60.0  | 2
+
+<br>
+
+**5. If a Meat Lovers pizza was $12 and Vegetarian $10 fixed prices with no cost for extras and each runner is paid $0.30 per kilometre traveled - how much money does Pizza Runner have left over after these deliveries?**
+
+```sql
+WITH cte_join AS(
+SELECT
+  o.order_id,
+  o.pizza_id,
+  COUNT(o.pizza_id) AS pizza_num_ordered,
+  n.pizza_name,
+  r.runner_id,
+  UNNEST(REGEXP_MATCHES(r.distance, '(^[0-9,.]+)'))::NUMERIC AS distance,
+  CASE WHEN n.pizza_name = 'Meatlovers' THEN 12 ELSE 10 END as pizza_revenue
+FROM pizza_runner.customer_orders AS o
+INNER JOIN pizza_runner.pizza_names AS n
+  ON o.pizza_id = n.pizza_id
+INNER JOIN pizza_runner.runner_orders AS r
+  ON o.order_id = r.order_id
+  AND r.pickup_time <> 'null'
+GROUP BY
+  o.order_id, o.pizza_id,n.pizza_name,r.runner_id, r.distance
+)
+
+SELECT
+  SUM(pizza_revenue - 0.3 * distance) AS net_profit
+FROM cte_join;
+```
+**Output**
+
+net_profit
+--  |
+59.4  |
+
+---
+### Bonus Question
+
+**If Danny wants to expand his range of pizzas - how would this impact the existing data design? Write an INSERT statement to demonstrate what would happen if a new Supreme pizza with all the toppings was added to the Pizza Runner menu?**
+
+```sql
+DROP TABLE IF EXISTS temp_pizza_names;
+CREATE TEMP TABLE temp_pizza_names AS
+SELECT * FROM pizza_runner.pizza_names;
+
+INSERT INTO temp_pizza_names
+  ("pizza_id", "pizza_name")
+VALUES
+  ('3', 'Supreme');
+  
+-- See Output 1
+select * from temp_pizza_names
+
+DROP TABLE IF EXISTS temp_pizza_recipes;
+CREATE TEMP TABLE temp_pizza_recipes AS
+SELECT * FROM pizza_runner.pizza_recipes;
+
+INSERT INTO temp_pizza_recipes
+  ("pizza_id", "toppings")
+VALUES
+  ('3',(
+  SELECT
+   STRING_AGG(topping_id::TEXT, ', ')
+  FROM pizza_runner.pizza_toppings
+  )
+);
+
+-- See Output 2
+select * from temp_pizza_recipes;
+```
+
+**Output 1**
+
+pizza_id  | pizza_name
+--  | --
+1 | Meatlovers
+2 | Vegetarian
+3 | Supreme
+
+<br>
+
+**Output 2**
+
+pizza_id  | toppings
+--  | --
+1 | 1, 2, 3, 4, 5, 6, 8, 10
+2 | 4, 6, 7, 9, 11, 12
+3 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 
 
 
