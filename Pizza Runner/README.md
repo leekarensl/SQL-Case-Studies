@@ -945,6 +945,8 @@ total_revenue |
 --  |
 160 |
 
+<br>
+
 **2. What if there was an additional $1 charge for any pizza extras? For e.g. Add cheese is $1 extra**<br>
 
 Using SUM with COALESCE to sum 2 columns and CARDINALITY to return the number of elements in the array. 
@@ -977,3 +979,113 @@ FROM cleaned_orders;
 total_pizza_costs
 --  |
 142 |
+
+<br>
+
+**3. The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.**
+
+```sql
+DROP TABLE IF EXISTS pizza_runner.ratings;
+CREATE TABLE pizza_runner.ratings (
+  "order_id" INTEGER,
+  "rating" INTEGER
+);
+
+INSERT INTO pizza_runner.ratings
+  ("order_id", "rating")
+VALUES
+  ('1', '4'),
+  ('2', '3'),
+  ('3', '3'),
+  ('4', '5'),
+  ('5', '2'),
+  ('7', '5'),
+  ('8', '2'),
+  ('10', '3');
+  
+SELECT * FROM pizza_runner.ratings;
+```
+**Output**
+
+order_id  | rating
+--  | --
+1 | 4
+2 | 3
+3 | 3
+4 | 5
+5 | 2
+7 | 5
+8 | 2
+10  | 3
+
+
+**4. Using your newly generated table - can you join all of the information together to form a table which has the following information for successful deliveries?**
+- **customer_id**
+- **order_id**
+- **runner_id**
+- **ating**
+- **order_time**
+- **pickup_time**
+- **Time between order and pickup**
+- **Delivery duration**
+- **Average speed**
+- **Total number of pizzas**
+
+```sql
+WITH cte_join AS(
+SELECT
+  t1.order_id,
+  t1.customer_id,
+  t1.pizza_id,
+  t1.order_time,
+  t2.runner_id,
+  t2.pickup_time,
+  UNNEST(REGEXP_MATCHES(t2.distance, '(^[0-9,.]+)'))::NUMERIC AS distance,
+  UNNEST(REGEXP_MATCHES(t2.duration, '(^[0-9,.]+)'))::NUMERIC AS duration,
+  t3.rating
+FROM pizza_runner.customer_orders AS t1
+INNER JOIN pizza_runner.runner_orders AS t2
+  ON t1.order_id = t2.order_id
+  AND t2.pickup_time <> 'null'
+INNER JOIN pizza_runner.ratings AS t3
+  ON t1.order_id = t3.order_id
+)
+
+SELECT
+  customer_id,
+  order_id,
+  runner_id,
+  rating,
+  order_time,
+  pickup_time,
+  DATE_PART('minute', AGE(pickup_time::TIMESTAMP, order_time))::INTEGER AS mins_between_order_pickup,
+  duration AS delivery_duration,
+  ROUND(distance/ (duration /60),1) AS avg_speed,
+  COUNT(pizza_id) AS number_of_pizza
+FROM cte_join
+GROUP BY
+  customer_id,
+  order_id,
+  runner_id,
+  rating,
+  order_time,
+  pickup_time,
+  distance,
+  duration
+ORDER BY order_id;
+```
+**Output**
+
+customer_id | order_id  | runner_id | rating  | order_time  | pickup_tme  | mins_between_order_pickup | delivery_duration |avg_speed  | number_of_pizza
+--  | --  | --  | --  | --  | -- | -- | --  | --  | --
+101 | 1 | 1 | 4 | 2021-01-01 18:05:02.000 | 2021-01-01 18:15:34 | 10  | 32  | 37.5  | 1
+101 | 2 | 1 | 3 | 2021-01-01 19:00:52.000 | 2021-01-01 19:10:54 | 10  | 27  | 44.4  | 1
+102 | 3 | 1 | 3 | 2021-01-02 23:51:23.000 | 2021-01-03 00:12:37 | 21  | 20  | 40.2  | 2
+103 | 4 | 2 | 5 | 2021-01-04 13:23:46.000 | 2021-01-04 13:53:03 | 29  | 40  | 35.1  | 3
+104 | 5 | 3 | 2 | 2021-01-08 21:00:29.000 | 2021-01-08 21:10:57 | 10  | 15  | 40.0  | 1
+105 | 7 | 2 | 5 | 2021-01-08 21:20:29.000 | 2021-01-08 21:30:45 | 10  | 25  | 60.0  | 1
+102 | 8 | 2 | 2 | 2021-01-09 23:54:33.000 | 2021-01-10 00:15:02 | 20  | 15  | 93.6  | 1
+104 | 10  | 1 | 3 | 2021-01-11 18:34:49.000 | 2021-01-11 18:50:20 | 15  | 10  | 60.0  | 2
+
+
+
