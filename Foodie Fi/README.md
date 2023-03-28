@@ -104,3 +104,39 @@ total_customer_num
 --|
 1000
 
+<br>
+
+**2. What is the monthly distribution of trial plan start_date values for our dataset - use the start of the month as the group by value**
+
+```sql
+SELECT
+  DATE_TRUNC('month', o.start_date)::DATE AS start_of_month,
+  count(o.*) AS total_num
+FROM foodie_fi.subscriptions AS o
+INNER JOIN foodie_fi.plans AS p
+  ON o.plan_id = p.plan_id
+WHERE p.plan_name = 'trial'
+GROUP BY start_of_month
+ORDER BY start_of_month;
+```
+
+**Output**
+
+start_of_month  | total_num
+--  | --
+2020-01-01  | 88
+2020-02-01  | 68
+2020-03-01  | 94
+2020-04-01  | 81
+2020-05-01  | 88
+2020-06-01  | 79
+2020-07-01  | 89
+2020-08-01  | 88
+2020-09-01  | 87
+2020-10-01  | 79
+2020-11-01  | 75
+2020-12-01  | 84
+
+
+
+
