@@ -170,7 +170,7 @@ basic monthly | 8
 SELECT
   SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) AS churn_number,
   ROUND(
-    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) /
+    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END)::NUMERIC /
       COUNT(DISTINCT customer_id),
   1) AS percentage_of_churn
 FROM foodie_fi.subscriptions;
@@ -180,7 +180,7 @@ FROM foodie_fi.subscriptions;
 
 churn_number  | percentage_of_churn
 --  | --
-307 | 30.0
+307 | 30.7
 <br>
 
 **5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?**
@@ -200,7 +200,7 @@ WITH plans AS(
 SELECT
   SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) AS churn_numbers,
   ROUND(
-    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) /
+    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END)::NUMERIC /
     COUNT(*),
   1) AS percentage_churn
 FROM plans
@@ -211,7 +211,7 @@ WHERE plan_rank = 2;
 
 churn_numbers | percentrage_churn
 --  | --
-92  | 9.0
+92  | 9.2
 
 
 
