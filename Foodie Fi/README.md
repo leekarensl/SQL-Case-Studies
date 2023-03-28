@@ -137,6 +137,82 @@ start_of_month  | total_num
 2020-11-01  | 75
 2020-12-01  | 84
 
+<br>
+
+**3. What plan start_date values occur after the year 2020 for our dataset? Show the breakdown by count of events for each plan_name?**
+
+```sql
+SELECT
+  p.plan_name,
+  COUNT(*) AS event_count
+FROM foodie_fi.subscriptions AS s
+INNER JOIN foodie_fi.plans AS p
+  ON s.plan_id = p.plan_id
+  AND s.start_date > '2020-12-31'
+GROUP BY p.plan_name
+ORDER BY event_count DESC;
+```
+
+**Output**
+
+plan_name | event_count
+--  | --
+churn | 71
+pro annual  | 63
+pro monthly | 60
+basic monthly | 8
+
+<br>
+
+**4. What is the customer count and percentage of customers who have churned rounded to 1 decimal place?**
+
+```sql
+SELECT
+  SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) AS churn_number,
+  ROUND(
+    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) /
+      COUNT(DISTINCT customer_id),
+  1) AS percentage_of_churn
+FROM foodie_fi.subscriptions;
+```
+
+**Output**
+
+churn_number  | percentage_of_churn
+--  | --
+307 | 30.0
+<br>
+
+**5. How many customers have churned straight after their initial free trial - what percentage is this rounded to the nearest whole number?**
+
+```sql
+WITH plans AS(
+  SELECT 
+    customer_id,
+    plan_id,
+    ROW_NUMBER() OVER (
+      PARTITION BY customer_id
+      ORDER BY start_date
+    ) AS plan_rank
+  FROM foodie_fi.subscriptions
+)
+
+SELECT
+  SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) AS churn_numbers,
+  ROUND(
+    100 * SUM(CASE WHEN plan_id = 4 THEN 1 ELSE 0 END) /
+    COUNT(*),
+  1) AS percentage_churn
+FROM plans
+WHERE plan_rank = 2;
+```
+
+**Output**
+
+churn_numbers | percentrage_churn
+--  | --
+92  | 9.0
+
 
 
 
