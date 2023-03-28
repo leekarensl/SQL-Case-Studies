@@ -36,7 +36,7 @@ If customers downgrade from a pro plan or cancel their subscription - the higher
 When customers upgrade their account from a basic plan to a pro or annual pro plan - the higher plan will take effect straightaway.
 
 When customers churn - they will keep their access until the end of their current billing period but the start_date will be technically the day they decided to cancel their service. See sample table below:<br><br>
-![SampleSubscriptions](sample-subscriptions-table)
+![SampleSubscriptions](sample-subscriptions-table.png)
 
 <br>
 
@@ -82,3 +82,25 @@ customer_id | plan_name | start_date
 19  | trial | 2020-06-22
 19  | pro monthly | 2020-06-29
 19  | pro annual  | 2020-08-29
+<br>
+
+---
+### Data Analysis Questions
+
+**1. How many customers has Foodie-Fi ever had?**
+
+```sql
+SELECT 
+  COUNT(*) AS total_customer_num
+FROM(
+  SELECT DISTINCT customer_id
+    FROM foodie_fi.subscriptions) AS subquery
+;
+```
+
+**Output**
+
+total_customer_num
+--|
+1000
+
