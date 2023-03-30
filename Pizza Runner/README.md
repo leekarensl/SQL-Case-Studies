@@ -15,7 +15,7 @@ Danny is  very aware that data collection was going to be critical for his busin
 
 ![DataERD](PizzaRunnerERD.png)
 
-## Danny's questions and my SQL solutions:
+## The business questions and my SQL solutions:
 
 ### Pizza Metrics
 
