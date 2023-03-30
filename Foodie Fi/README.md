@@ -250,6 +250,175 @@ pro annual  | 37  | 3.7
 
 <br>
 
+**7. What is the customer count and percentage breakdown of all 5 plan_name values at 2020-12-31?**
+
+```sql
+WITH valid_subscriptions AS (
+  SELECT
+    customer_id,
+    plan_id,
+    start_date,
+    ROW_NUMBER() OVER (
+      PARTITION BY customer_id
+      ORDER BY start_date DESC
+    ) AS plan_rank
+  FROM foodie_fi.subscriptions
+  WHERE start_date <= '2020-12-31'
+)
+
+SELECT
+  p.plan_name,
+  COUNT(DISTINCT v.customer_id) AS customers,
+  ROUND
+    (100 * COUNT(v.*) / SUM(COUNT(v.*)) OVER()
+  , 1) AS percentage
+FROM 
+  valid_subscriptions AS v
+INNER JOIN foodie_fi.plans AS p
+  ON v.plan_id = p.plan_id
+  AND v.plan_rank = 1
+GROUP BY
+  v.plan_id, plan_name
+ORDER BY percentage DESC;
+```
+**Output**
+
+plan_name | customers | percentage
+--  | --  | --
+pro monthly |  326  | 32.6
+churn | 236 | 23.6
+basic monthly | 224 | 22.4
+pro annual  | 195 | 19.5
+trial | 19  | 1.9
+
+<br>
+
+**8. How many customers have upgraded to an annual plan in 2020?**
+
+```sql
+SELECT
+  COUNT(DISTINCT s.customer_id) AS customer_num
+FROM foodie_fi.subscriptions AS s
+INNER JOIN foodie_fi.plans AS p
+  ON s.plan_id = p.plan_id
+  AND s.start_date BETWEEN '2020-01-01' AND '2020-12-31'
+WHERE p.plan_name LIKE '%nnua%';
+
+```
+**Output**
+customer_num
+--|
+195 |
+
+<br>
+
+**9. How many days on average does it take for a customer to upgrade to an annual plan from the day they join Foodie-Fi?**
+
+```sql
+WITH annual_subscribers AS(
+SELECT
+  customer_id,
+  start_date 
+FROM foodie_fi.subscriptions
+WHERE plan_id = 3
+),
+
+trial_subscribers AS(
+SELECT
+  customer_id,
+  start_date 
+FROM foodie_fi.subscriptions
+WHERE plan_id = 0
+)
+
+SELECT
+  ROUND(AVG (a.start_date - t.start_date)) AS avg_days_to_upgrade
+FROM annual_subscribers AS a
+INNER JOIN trial_subscribers AS t
+  ON a.customer_id = t.customer_id;
+```
+**Output**
+
+avg_days_to_upgrade
+--|
+105 |
+
+**10. Can you further breakdown this average value into 30 day periods (i.e. 0-30 days, 31-60 days etc)**
+
+```sql
+WITH annual_subscribers AS(
+SELECT
+  customer_id,
+  start_date 
+FROM foodie_fi.subscriptions
+WHERE plan_id = 3
+),
+
+trial_subscribers AS(
+SELECT
+  customer_id,
+  start_date 
+FROM foodie_fi.subscriptions
+WHERE plan_id = 0
+),
+
+duration AS (
+  SELECT WIDTH_BUCKET(a.start_date - t.start_date, 0, 360,12) AS avg_days_to_upgrade
+  FROM annual_subscribers AS a
+  INNER JOIN trial_subscribers AS t
+    ON a.customer_id = t.customer_id
+)
+SELECT ((avg_days_to_upgrade - 1)*30 || '-' || (avg_days_to_upgrade)*30) AS "30_day_period", 
+COUNT(*) AS customer_num
+FROM duration
+GROUP BY avg_days_to_upgrade
+ORDER BY avg_days_to_upgrade;
+```
+**Output**
+
+30_day_period | customer_num
+--  | --
+0-30  | 48
+30-60 | 25
+60-90 | 33
+90-120  | 35
+120-150 | 43
+150-180 | 35
+180-210 | 27
+210 - 240 | 4
+240-270 | 5
+270-300 | 1
+300-330 | 1
+330-360 | 1
+
+<br>
+
+**11. How many customers downgraded from a pro monthly to a basic monthly plan in 2020?**
+
+```sql
+WITH plan_switch AS(
+SELECT
+  customer_id,
+  plan_id,
+  start_date,
+  LAG(plan_id) OVER (
+    PARTITION BY customer_id ORDER BY start_date DESC)
+  AS previous_plan_id
+FROM foodie_fi.subscriptions
+WHERE start_date BETWEEN '2020-01-01' AND '2020-12-31'
+)
+
+SELECT
+  COUNT(customer_id) AS customer_count
+FROM plan_switch
+WHERE previous_plan_id = 2 and plan_id = 1;
+```
+**Output**
+
+customer_count
+--  |
+163 |
+
 
 
 
