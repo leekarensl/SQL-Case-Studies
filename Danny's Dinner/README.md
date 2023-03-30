@@ -17,7 +17,7 @@ Danny has provided a sample of his overall customer data. The 3 key datasets for
 
 ![Data ERD](DannysDinerERD.png)
 
-## Danny's questions and my SQL solutions:
+## The business questions and my SQL solutions:
 
 **1. What is the total amount each customer spent at the restaurant?**
 
