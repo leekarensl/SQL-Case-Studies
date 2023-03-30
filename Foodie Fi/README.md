@@ -40,7 +40,7 @@ When customers churn - they will keep their access until the end of their curren
 
 <br>
 
-## Danny's questions and my SQL solutions:
+## The business questions and my SQL solutions:
 
 ### Customer Journey
 
