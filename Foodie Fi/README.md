@@ -213,6 +213,45 @@ churn_numbers | percentrage_churn
 --  | --
 92  | 9.2
 
+<br>
+
+**6. What is the number and percentage of customer plans after their initial free trial?**
+
+```sql
+WITH cte_plan_rank AS(
+SELECT
+  customer_id,
+  plan_id,
+  ROW_NUMBER() OVER (
+    PARTITION BY customer_id ORDER BY start_date
+  ) AS plan_rank
+FROM foodie_fi.subscriptions
+)
+
+SELECT
+  p.plan_name,
+  COUNT(c.*) AS customer_num,
+  ROUND(100* COUNT(c.*) /SUM (COUNT(*)) OVER(),1) AS percentage
+FROM cte_plan_rank AS c
+INNER JOIN foodie_fi.plans AS p
+  ON c.plan_id = p.plan_id
+  AND c.plan_rank = 2
+GROUP BY plan_name
+ORDER BY percentage DESC;
+```
+**Output**
+
+plan_name | customer_num  | percentage
+--  | --  | --
+basic monthly | 546 | 54.6
+pro monthly | 325 | 32.5
+churn | 92   | 9.2
+pro annual  | 37  | 3.7
+
+<br>
+
+
+
 
 
 
