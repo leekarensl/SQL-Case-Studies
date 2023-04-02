@@ -432,5 +432,138 @@ customer_count
 - **upgrades from pro monthly to pro annual are paid at the end of the current billing period and also starts at the end of the month period
 once a customer churns they will no longer make payments**
 
+```sql
+WITH lead_plans AS(
+SELECT
+  customer_id,
+  plan_id,
+  start_date,
+  LEAD(plan_id) OVER(
+    PARTITION BY customer_id ORDER BY start_date) AS lead_plan_id,
+  LEAD(start_date) OVER(
+    PARTITION BY customer_id ORDER BY start_date) AS lead_start_date
+FROM foodie_fi.subscriptions
+WHERE start_date BETWEEN '2020-01-01' AND '2020-12-31'
+AND plan_id <> 0
+),
+
+-- monthly customers that did not churn
+case_1 AS(
+SELECT
+  customer_id,
+  plan_id,
+  lead_plan_id,
+  start_date,
+  DATE_PART('MONTH', AGE('2020-12-31'::DATE, start_date))::INTEGER as month_diff
+FROM lead_plans
+-- filter out lead_plan_id IS NULL to avoid generating month_diff values on previous plan when customer has moved to another plan
+WHERE plan_id NOT IN (3,4) AND lead_plan_id IS NULL
+),
+
+case_1_payments AS(
+SELECT
+  customer_id,
+  plan_id,
+  -- * INTERVAL will give you the same date each month. + INTERVAL adds a day more from the last start_date
+  (start_date + GENERATE_SERIES(0, month_diff) * INTERVAL '1 month')::DATE AS start_date
+FROM case_1
+),
+
+-- customers that churned
+case_2 AS(
+SELECT
+  customer_id,
+  plan_id,
+  start_date,
+  DATE_PART('MONTH', AGE(lead_start_date - 1, start_date))::INTEGER as month_diff
+FROM lead_plans
+WHERE lead_plan_id = 4
+),
+
+case_2_payments AS(
+SELECT
+  customer_id,
+  plan_id,
+  (start_date + GENERATE_SERIES(0, month_diff) * INTERVAL '1 month')::DATE AS start_date
+FROM case_2
+),
+
+-- customers that moved from basic plans to pro plans
+case_3 AS(
+SELECT
+  customer_id,
+  plan_id,
+  start_date,
+  DATE_PART('MONTH', AGE(lead_start_date - 1, start_date)) :: INTEGER AS month_diff
+FROM lead_plans
+WHERE plan_id = 1 AND lead_plan_id IN (2,3)
+),
+
+case_3_payments AS(
+SELECT
+  customer_id,
+  plan_id,
+  (start_date + GENERATE_SERIES (0, month_diff) * INTERVAL '1 month'):: DATE AS start_date
+FROM case_3
+),
+
+-- pro monthly customers that moved to annual plans
+case_4 AS(
+SELECT 
+  customer_id,
+  plan_id,
+  start_date,
+  DATE_PART('MONTH', AGE(lead_start_date - 1, start_date)):: INTEGER AS month_diff
+FROM lead_plans
+WHERE plan_id = 2 AND lead_plan_id = 3
+),
+
+case_4_payments AS(
+SELECT
+  customer_id,
+  plan_id,
+  (start_date + GENERATE_SERIES(0, month_diff) * INTERVAL '1 month'):: DATE AS start_date
+FROM case_4
+),
+
+-- annual payment plan subscribers
+case_5_payments AS(
+SELECT
+  customer_id,
+  plan_id,
+  start_date
+FROM lead_plans
+WHERE plan_id = 3
+),
+
+union_output AS (
+SELECT * FROM case_1_payments
+UNION
+SELECT * FROM case_2_payments 
+UNION
+SELECT * FROM case_3_payments
+UNION
+SELECT * FROM case_4_payments
+UNION
+SELECT * FROM case_5_payments 
+)
+
+SELECT
+  u.customer_id,
+  p.plan_id,
+  p.plan_name,
+  start_date AS payment_date,
+  CASE WHEN u.plan_id IN (2,3) AND LAG(u.plan_id) OVER w = 1 THEN (p.price - 9.90) ELSE p.price END AS amount,
+  RANK() OVER w AS payment_order
+FROM union_output AS u
+INNER JOIN foodie_fi.plans AS p 
+  ON u.plan_id = p.plan_id
+
+WINDOW w AS(
+  PARTITION BY u.customer_id
+  ORDER BY start_date
+);
+```
+
 
 
