@@ -433,6 +433,8 @@ customer_count
 once a customer churns they will no longer make payments**
 
 ```sql
+DROP TABLE IF EXISTS foodie_payments;
+CREATE TEMP TABLE foodie_payments AS
 WITH lead_plans AS(
 SELECT
   customer_id,
@@ -562,8 +564,15 @@ INNER JOIN foodie_fi.plans AS p
 WINDOW w AS(
   PARTITION BY u.customer_id
   ORDER BY start_date
-);
+)
+;
+
+SELECT * FROM foodie_payments;
 ```
+
+**Output**
+
+Output is 4445 rows! You can find an exported xlsx version [here](Foodie-Fi-Payment-Table-Output.xlsx)
 
 
 
