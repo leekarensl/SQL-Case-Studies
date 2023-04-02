@@ -572,7 +572,7 @@ SELECT * FROM foodie_payments;
 
 **Output**
 
-Output is 4445 rows! You can find an exported xlsx version [here](Foodie-Fi-Payment-Table-Output.xlsx)
+Output is 4445 rows! You can download an exported xlsx version [here](Foodie-Fi-Payment-Table-Output.xlsx)
 
 
 
