@@ -573,6 +573,67 @@ SELECT * FROM foodie_payments;
 **Output**
 
 Output is 4445 rows! You can download an exported xlsx version [here](Foodie-Fi-Payment-Table-Output.xlsx)
+<br>
+
+---
+### Business Questions
+
+<br>
+
+**1. How can rate of growth be calculated ? What key metrics to be recommended to management of Foodie Fi to track over time to assess performance of their overall business**
+
+Rate of growth can be calculated with any metric that would increase revenue and/or decrease in costs. Example of such metrics would be:
+
+- Percentage increase in total subscribers
+- Percentage of subscribers that upgrade their plans
+- Percentage of subscribers that downgrade their plans
+- Percentage of subscribers on the different plans
+- Percentage of churners
+- Percentage increase/decrease of cost to acquire new subscribers
+
+<br>
+
+**2. What are some key customer journeys or experiences that you would analyse further to improve customer retention?**
+
+A customer does not churn if they find a product or service useful or relevant. Therefore some key aspects to look out for would be customer engagement or stickiness. Key customer journeys include:
+
+- How often a customer logs in to view the channel.
+- How often a video is watched/re-watched.
+- How long do they stay on for that session.
+- How often a video is being downloaded for subscribers with pro plans.
+- Which video is most often skipped and at what point.
+- What are some search words that subscribers are using on the platform.
+- What videos are most watched together.
+
+<br>
+**3. If the Foodie-Fi team were to create an exit survey shown to customers who wish to cancel their subscription, what questions would you include in the survey?**
+
+An obvious question would be the reason for the churn. And the answer options could be:
+- Price
+- Content Relevance
+- Content Quality
+- Ease of Use
+
+A second question I might include would be to ask for general feedback of their customer experience with the service during their trial/subscription period.
+
+<br>
+
+**4. What business levers could the Foodie-Fi team use to reduce the customer churn rate? How would you validate the effectiveness of your ideas?**
+
+As Foodie-Fi already has data about both their existing and churned customers, one way might be to build a machine learning model that will help Foodie-Fi predict customers most likely to churn. Foodie-Fi can then proactively approach such customers and offer them some form of incentive to stay on the service. These may include:
+
+- Price discount if they upgrade to a pro plan.
+- Referral rewards
+
+Other business levers could be a 'reward' for long time subscribers. For example, one month free pro monthly plan for being a basic monthly subscriber for 2 years! This would allow basic monthly subscribers to experience the perks of being a pro subscriber which might improve subscriber stickiness.
+
+Validation of the effectiveness for the above ideas can be carried out using A/B Testing.
+
+
+
+
+
+
 
 
 
