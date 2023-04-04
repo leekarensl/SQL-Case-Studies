@@ -606,6 +606,7 @@ A customer does not churn if they find a product or service useful or relevant. 
 - What videos are most watched together.
 
 <br>
+
 **3. If the Foodie-Fi team were to create an exit survey shown to customers who wish to cancel their subscription, what questions would you include in the survey?**
 
 An obvious question would be the reason for the churn. And the answer options could be:
@@ -625,9 +626,9 @@ As Foodie-Fi already has data about both their existing and churned customers, o
 - Price discount if they upgrade to a pro plan.
 - Referral rewards
 
-Other business levers could be a 'reward' for long time subscribers. For example, one month free pro monthly plan for being a basic monthly subscriber for 2 years! This would allow basic monthly subscribers to experience the perks of being a pro subscriber which might improve subscriber stickiness.
+Other business levers could be a 'reward' for long time subscribers. For example, one month free pro monthly plan for being a basic monthly subscriber for 2 years! This would allow basic monthly subscribers to experience the perks of being a pro subscriber which might improve subscriber 'stickiness'.
 
-Validation of the effectiveness for the above ideas can be carried out using A/B Testing.
+Validation of effectiveness for the above ideas can be carried out using A/B Testing.
 
 
 
