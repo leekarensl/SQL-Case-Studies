@@ -129,8 +129,6 @@ Europe  | 88
 The following code was my original solution which gave me the **output of 14 days** as average duration:
 
 ```sql
-SELECT * from data_bank.customer_nodes
-where customer_id = 5;
 
 WITH node_change AS(
 SELECT
