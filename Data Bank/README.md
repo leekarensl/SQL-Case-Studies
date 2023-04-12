@@ -49,6 +49,7 @@ This table stores all customer deposits, withdrawals and purchases made using th
 
 ## The business questions and my SQL solutions:<br>
 
+
 ### Customer Nodes Exploration
 
 **1. How many unique nodes are there on the Data Bank system?**
@@ -206,6 +207,38 @@ FROM cte;
 avg_duration
 --  |
 17  |
+
+<br>
+
+**5. What is the median, 80th and 95th percentile for this same reallocation days metric for each region?**
+
+Will come back to this question later.<br>
+
+---
+
+### Customer Transactions
+
+**1. What is the unique count and total amount for each transaction type?**
+
+```sql
+SELECT
+  DISTINCT txn_type,
+  COUNT(*) AS transaction_count,
+  SUM(txn_amount) AS total_amount
+FROM data_bank.customer_transactions
+GROUP BY
+  txn_type
+ORDER BY total_amount DESC;
+```
+
+**Output**
+
+txn_type  | transaction_count | total_amount
+--  | --  | --
+deposit | 2671  | 1359168
+purchase  | 1617  | 806537
+withdrawal  | 1580  | 793003
+
 
 
 
