@@ -171,7 +171,7 @@ SELECT
 FROM ranked_customer_nodes
 WHERE row_number = 1
 
-UNION
+UNION ALL
 
 SELECT
   t1.customer_id,
@@ -192,7 +192,6 @@ cte AS(
     run_id,
     SUM(duration) AS node_duration
   FROM output_table
-  where customer_id = 1
   GROUP BY
     customer_id,
     run_id
