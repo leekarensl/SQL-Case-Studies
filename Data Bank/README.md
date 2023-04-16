@@ -211,7 +211,82 @@ avg_duration
 
 **5. What is the median, 80th and 95th percentile for this same reallocation days metric for each region?**
 
-Will come back to this question later.<br>
+```sql
+DROP TABLE IF EXISTS ranked_customer_nodes;
+CREATE TEMP TABLE ranked_customer_nodes AS
+SELECT
+  customer_id,
+  node_id,
+  region_id,
+  DATE_PART('day', AGE(end_date, start_date))::INTEGER AS duration,
+  ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY start_date) AS row_number
+FROM data_bank.customer_nodes;
+
+
+WITH RECURSIVE output_table AS (
+SELECT
+  customer_id,
+  node_id,
+  region_id,
+  duration,
+  row_number,
+  1 as run_id
+FROM ranked_customer_nodes
+WHERE row_number = 1
+
+UNION ALL
+
+SELECT
+  t1.customer_id,
+  t2.node_id,
+  t2.region_id,
+  t2.duration,
+  t2.row_number,
+  CASE WHEN t1.node_id <> t2.node_id THEN t1.run_id + 1 ELSE t1.run_id END AS run_id
+FROM output_table AS t1
+INNER JOIN ranked_customer_nodes AS t2
+  ON t1.row_number + 1 = t2.row_number
+  AND t1.customer_id = t2.customer_id
+  AND t2.row_number > 1
+),
+
+cte AS(
+  SELECT
+    customer_id,
+    run_id,
+    region_id,
+    SUM(duration) AS node_duration
+  FROM output_table
+  GROUP BY
+    customer_id,
+    run_id,
+    region_id
+)
+
+SELECT
+  r.region_name,
+  ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY c.node_duration)) AS median_duration,
+  ROUND(PERCENTILE_CONT(0.8) WITHIN GROUP (ORDER BY c.node_duration)) AS percentile_80_duration,
+  ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY c.node_duration)) AS percentile_95_duration
+FROM cte AS c
+INNER JOIN data_bank.regions AS r
+  ON c.region_id = r.region_id
+GROUP BY region_name;
+
+```
+
+**Output**
+
+region_name | median_duration | percentile_80_duration  | percentile_95_duration
+--  | --  | --  | --
+Africa  | 17  | 27  | 40
+America | 17  | 26  | 35
+Asia  | 17  | 26  | 40
+Australia | 17  | 25  | 38
+Europe  | 17  | 27  | 37
+
+<br>
+
 
 ---
 
@@ -237,6 +312,37 @@ txn_type  | transaction_count | total_amount
 deposit | 2671  | 1359168
 purchase  | 1617  | 806537
 withdrawal  | 1580  | 793003
+
+<br>
+
+**2. What is the average total historical deposit counts and amounts for all customers?**
+
+```sql
+WITH cte AS(
+SELECT
+  customer_id,
+  COUNT(*) AS deposit_counts,
+  SUM(txn_amount) AS total_deposit_amt
+FROM data_bank.customer_transactions
+WHERE txn_type = 'deposit'
+GROUP BY customer_id
+)
+
+SELECT
+  ROUND(AVG(deposit_counts)) AS avg_deposit_counts,
+  -- note you can't do a simple AVG for the total_deposit_amt as it will be an average of customer numbers rather than deposit counts
+  ROUND(SUM(total_deposit_amt)/ SUM(deposit_counts)) AS avg_total_deposits
+FROM cte;
+```
+
+**Output**
+
+avg_deposit_counts  |  avg_total_deposits
+--  | --
+5 | 509
+
+<br>
+
 
 
 
