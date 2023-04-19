@@ -383,13 +383,33 @@ month | customer_count
 **4. What is the closing balance for each customer at the end of the month?**
 
 ```sql
+WITH balance AS(
 SELECT
   customer_id,
   DATE_TRUNC('MONTH', txn_date) AS month,
   SUM(CASE WHEN txn_type = 'deposit' THEN txn_amount ELSE -txn_amount END) AS balance
 FROM data_bank.customer_transactions
 GROUP BY customer_id, month
-ORDER BY customer_id, month;
+ORDER BY customer_id, month
+),
+
+months AS(
+SELECT
+  DISTINCT(customer_id),
+  ('2020-01-01':: DATE + GENERATE_SERIES (0, 3) * INTERVAL '1 MONTH'):: DATE AS month
+FROM balance
+
+)
+
+SELECT
+  b.customer_id,
+  m.month,
+  COALESCE(b.balance, 0) AS balance_contribution,
+  SUM(b.balance) OVER (PARTITION BY b.customer_id ORDER BY m.month ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS ending_balance
+FROM months AS m
+INNER JOIN balance AS b
+  ON m.customer_id = b.customer_id
+  AND m.month = b.month;
 
 ```
 
