@@ -415,7 +415,91 @@ INNER JOIN balance AS b
 
 **Output**
 
-Output is 1720 rows! You can download an exported csv version [here](Q4_closing_balance_output.csv)
+Output is 1720 rows! You can download an exported csv version [here](Q4_closing_balance_output.csv) <br>
+
+**5. Comparing the closing balance of a customer’s first month and the closing balance from their second month, what percentage of customers:** <br>
+**Have a negative first month balance?** <br>
+**Have a positive first month balance?** <br>
+**Increase their opening month’s positive closing balance by more than 5% in the following month?** <br>
+**Reduce their opening month’s positive closing balance by more than 5% in the following month?** <br>
+**Move from a positive balance in the first month to a negative balance in the second month?** 
+
+```sql
+WITH balance AS(
+SELECT
+  customer_id,
+  DATE_TRUNC('MONTH', txn_date) AS month,
+  SUM(CASE WHEN txn_type = 'deposit' THEN txn_amount ELSE -txn_amount END) AS balance
+FROM data_bank.customer_transactions
+GROUP BY customer_id, month
+ORDER BY customer_id, month
+),
+
+months AS(
+SELECT
+  DISTINCT(customer_id),
+  ('2020-01-01':: DATE + GENERATE_SERIES (0, 3) * INTERVAL '1 MONTH'):: DATE AS month,
+  GENERATE_SERIES (0, 3) AS month_number
+FROM data_bank.customer_transactions
+),
+
+monthly_transactions AS(
+SELECT
+  m.customer_id,
+  m.month,
+  m.month_number,
+  COALESCE(b.balance, 0) AS transaction_amount
+FROM months AS m
+INNER JOIN balance AS b
+  ON m.customer_id = b.customer_id
+  AND m.month = b.month
+),
+
+monthly_aggregates AS(
+SELECT
+  customer_id,
+  month_number,
+  LAG(transaction_amount) OVER (PARTITION BY customer_id ORDER BY month) AS previous_month_transaction
+FROM monthly_transactions
+),
+
+calculations AS(
+SELECT
+  COUNT(DISTINCT m.customer_id) AS customer_count,
+  SUM(CASE WHEN a.previous_month_transaction > 0 THEN 1 ELSE 0 END) AS positive_first_month,
+  SUM(CASE WHEN a.previous_month_transaction < 0 THEN 1 ELSE 0 END) AS negative_first_month,
+  SUM(CASE 
+      WHEN a.previous_month_transaction > 0
+      AND m.transaction_amount > 0
+      AND m.transaction_amount > 1.05 * a.previous_month_transaction
+      THEN 1 ELSE 0 END) AS increase_count,
+  SUM(CASE 
+        WHEN m.transaction_amount > 0
+        AND a.previous_month_transaction > 0
+        AND m.transaction_amount < 1.05 * a.previous_month_transaction THEN 1 ELSE 0 END) AS decrease_count,
+  SUM(CASE WHEN m.transaction_amount < 0 AND a.previous_month_transaction > 0 THEN 1 ELSE 0 END) AS negative_bal
+FROM monthly_aggregates AS a
+INNER JOIN monthly_transactions AS m
+ON a.customer_id = m.customer_id
+AND a.month_number = m.month_number
+WHERE a.previous_month_transaction IS NOT NULL
+AND a.month_number IN (0,1)
+)
+
+SELECT
+  ROUND(100 * positive_first_month/ customer_count, 2) AS positive_1st_month_percent,
+  ROUND(100 * negative_first_month/ customer_count, 2) AS negative_1st_month_percent,
+  ROUND(100 * increase_count / customer_count, 2) AS increase_percent,
+  ROUND(100 * decrease_count / customer_count, 2) AS decrease_percent,
+  ROUND(100 * negative_bal/ customer_count, 2) AS negative_bal_percent
+FROM calculations;
+```
+
+**Output**
+
+positive_1st_month_percent  | negative_1st_month_percent  | increase_percent  | decrease_percent  | negative_bal_percent
+--  | --  | --  | --  | --  
+66.00  | 33.00  | 13.00 | 14.00 | 38.00
 
 
 
