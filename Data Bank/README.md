@@ -501,6 +501,84 @@ positive_1st_month_percent  | negative_1st_month_percent  | increase_percent  | 
 --  | --  | --  | --  | --  
 66.00  | 33.00  | 13.00 | 14.00 | 38.00
 
+<br>
+
+---
+
+### Data Allocation
+
+**To test out a few different hypotheses - the Data Bank team wants to run an experiment where different groups of customers would be allocated data using 3 different options:** <br>
+
+**Option 1: data is allocated based off the amount of money at the end of the previous month** <br>
+**Option 2: data is allocated on the average amount of money kept in the account in the previous 30 days** <br>
+**Option 3: data is updated real-time** <br>
+
+**Using all of the data available - how much data would have been required for each option on a monthly basis?** <br>
+
+#### ***Option 1: Data is allocated based off the amount of money at the end of the previous month.***
+
+```sql
+
+WITH month_transaction AS(
+SELECT
+  customer_id,
+  txn_date,
+  TO_CHAR(txn_date, 'Mon') AS month,
+  txn_type, 
+  CASE WHEN txn_type = 'deposit' THEN txn_amount ELSE -txn_amount END AS month_transaction_amt
+FROM data_bank.customer_transactions
+),
+
+running_balance AS(
+SELECT
+  customer_id,
+  txn_date,
+  month,
+  SUM(month_transaction_amt) OVER (PARTITION BY customer_id ORDER BY txn_date ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_balance
+FROM month_transaction
+),
+
+previous_balance AS(
+SELECT
+  customer_id,
+  month,
+  LAG(running_balance) OVER (PARTITION BY customer_id ORDER BY month) AS previous_balance
+FROM running_balance
+GROUP BY customer_id, month, running_balance
+),
+
+final_balance AS(
+SELECT
+  customer_id,
+  month,
+  MAX(previous_balance) AS final_previous_balance
+FROM previous_balance
+GROUP BY customer_id, month
+)
+
+SELECT
+  month,
+  SUM(final_previous_balance) AS data_required
+FROM final_balance
+GROUP BY month
+ORDER BY data_required DESC;
+
+```
+
+**Output**
+
+month | data_required
+--  | --
+Jan | 349523
+Mar | 348132
+Feb | 233671
+Apr | -64389
+
+<br>
+
+
+
+
 
 
 
