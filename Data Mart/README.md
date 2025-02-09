@@ -47,7 +47,39 @@ from data_mart.clean_weekly_sales;
 
 weekday |
 ----  |
-MONDAY    |
+MONDAY |
+
+**2. What range of week numbers are missing from the dataset?**
+
+```sql
+with all_week_numbers as(
+select generate_series(1,52) as week_number
+)
+
+select
+  week_number
+from all_week_numbers t1
+where not exists(
+ select 1
+ from data_mart.clean_weekly_sales t2
+ where t2.week_number = t1.week_number
+ )
+ ;
+```
+**Output**
+
+week_number |
+----  |
+1 |
+2 |
+...|
+11 |
+12|
+37|
+38|
+...|
+52|
+
 
 
 
