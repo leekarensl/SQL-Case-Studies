@@ -118,6 +118,70 @@ calendar_month | region | total_sales
 -- | --| --
 2020-08-01  | USA | 277361606
 
+**5. What is the total count of transactions for each platform**
+
+```sql
+select
+  platform,
+  sum(transactions) as total_transactions
+from data_mart.clean_weekly_sales
+group by 1
+order by 1;
+```
+**Output**
+
+platform | total_transactions
+---| ---
+Retail | 1081934227
+Shopify | 5925169
+
+**6. What is the percentage of sales for Retail vs Shopify for each month?**
+
+```sql
+with monthly_platform_sales as(
+select
+  date_trunc('month', week_date) as month,
+  platform,
+  sum(sales) as monthly_sales
+from data_mart.clean_weekly_sales
+group by 1,2
+order by 1,2
+)
+,
+
+monthly_total_sales as(
+select
+  month,
+  SUM(case when platform = 'Retail' then monthly_sales end) as retail_sales,
+  SUM(case when platform = 'Shopify' then monthly_sales end) as shopify_sales,
+  SUM(monthly_sales) as total_sales
+from monthly_platform_sales
+group by 1
+)
+
+select
+  month,
+  round(coalesce(retail_sales, 0) / NULLIF(total_sales, 0),2) as retail_percentage,
+  round(coalesce(shopify_sales, 0) / NULLIF(total_sales, 0),2) as shopify_percentage
+from monthly_total_sales
+order by 1;
+```
+**Output**
+
+month | retail_sales | shopify_sales
+-- | -- | --
+2018-03-01 | 97.92 | 2.08
+2018-04-01 | 97.93 | 2.07
+-- | -- | --
+2020-08-01 | 96.5 | 13.49
+
+
+
+
+
+
+
+
 
 
 
