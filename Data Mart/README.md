@@ -161,8 +161,8 @@ group by 1
 
 select
   month,
-  round(coalesce(retail_sales, 0) / NULLIF(total_sales, 0),2) as retail_percentage,
-  round(coalesce(shopify_sales, 0) / NULLIF(total_sales, 0),2) as shopify_percentage
+  round(100*coalesce(retail_sales, 0) / NULLIF(total_sales, 0),2) as retail_percentage,
+  round(100*coalesce(shopify_sales, 0) / NULLIF(total_sales, 0),2) as shopify_percentage
 from monthly_total_sales
 order by 1;
 ```
