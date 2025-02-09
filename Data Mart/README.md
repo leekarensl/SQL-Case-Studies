@@ -80,6 +80,47 @@ week_number |
 ...|
 52|
 
+**3. How many total transactions were there for each year?**
+
+```sql
+select
+   calendar_year,
+   sum(transactions) as total_transactions
+from data_mart.clean_weekly_sales
+group by 1
+order by 1;
+```
+**Output**
+
+calendar_year | total_transactions
+--- | ----
+2018 | 346406460
+2019 | 365639285
+2020 | 375813651
+
+**4. What is the total sales for each region for each month?**
+
+```sql
+select
+  distinct date_trunc('month', week_date) as calendar_month,
+  region,
+  sum(sales) as total_sales
+from data_mart.clean_weekly_sales
+group by 1,2
+order by 1,2;
+```
+**Output**
+
+calendar_month | region | total_sales
+---| ---| ----
+2018-03-01 | CANADA | 33815571
+2018-03-01  | EUROPE | 8402183
+-- | --| --
+2020-08-01  | USA | 277361606
+
+
+
+
 
 
 
