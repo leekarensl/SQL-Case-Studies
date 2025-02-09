@@ -168,7 +168,7 @@ order by 1;
 ```
 **Output**
 
-month | retail_sales | shopify_sales
+month | retail_percentage | shopify_percentage
 -- | -- | --
 2018-03-01 | 97.92 | 2.08
 2018-04-01 | 97.93 | 2.07
