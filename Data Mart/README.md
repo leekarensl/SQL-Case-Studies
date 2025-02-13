@@ -24,8 +24,8 @@ select
     else 'Unknown'
   end as age_band,
   case
-    when right(segment,1) = 'C' then 'Couples'
-    when right(segment,1) = 'F' then 'Families'
+    when left(segment,1) = 'C' then 'Couples'
+    when left(segment,1) = 'F' then 'Families'
   else 'Unknown' end as demographic,
   customer_type,
   transactions,
@@ -175,6 +175,42 @@ month | retail_percentage | shopify_percentage
 -- | -- | --
 2020-08-01 | 96.5 | 13.49
 
+**7. What is the percentage of sales by demographic for each year in the dataset?**
+
+```sql
+with yearly_sales as(
+select
+  calendar_year as year,
+  demographic,
+  sum(sales) as sales
+from data_mart.clean_weekly_sales
+group by 1,2
+)
+
+select
+  year,
+  round(100 * couples_sales /total_sales,2) as pct_couples_sales,
+  round(100 * families_sales/ total_sales,2) as pct_families_sales,
+  round(100 * unknown_sales/ total_sales,2) as pct_unknown_sales
+from(
+select
+  year,
+  SUM(case when demographic = 'Couples' then sales end) as couples_sales,
+  SUM(case when demographic = 'Families' then sales end) as families_sales,
+  SUM(case when demographic = 'Unknown' then sales end) as unknown_sales,
+  SUM(sales) as total_sales
+from yearly_sales
+group by 1
+)
+order by 1;
+```
+**Output**
+
+year | pct_couples_sales | pct_families_sales  | pct_unknown_sales
+-- | -- | -- | ---
+2018 | 26.38  | 31.99  | 41.63
+2019  | 27.28  | 32.47  | 40.25
+2020  | 28.72 | 32.73  | 38.55
 
 
 
