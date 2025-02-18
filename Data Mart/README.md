@@ -212,7 +212,47 @@ year | pct_couples_sales | pct_families_sales  | pct_unknown_sales
 2019  | 27.28  | 32.47  | 40.25
 2020  | 28.72 | 32.73  | 38.55
 
+**8. What age-band and demographic values contribute most to Retail sales?**
 
+```sql
+-- age band
+SELECT
+  age_band,
+  SUM(sales) AS total_sales,
+  ROUND(100.0 * SUM(sales) / SUM(SUM(sales)) OVER (), 0) AS sales_percentage
+FROM data_mart.clean_weekly_sales
+WHERE platform = 'Retail'
+GROUP BY 1
+ORDER BY 3 DESC;
+```
+**Output**
+
+age_band  | total_sales  | sales_percentage
+--  |   --  | --
+Unknown  | 16067285533 | 41
+Retirees | 13005266930 | 33
+Middle Aged  | 6208251884 | 16
+Young Adults | 4373812090 | 11
+
+```sql
+-- demographic
+SELECT
+  demographic,
+  SUM(sales) AS total_sales,
+  ROUND(100.0 * SUM(sales) / SUM(SUM(sales)) OVER (), 0) AS sales_percentage
+FROM data_mart.clean_weekly_sales
+WHERE platform = 'Retail'
+GROUP BY 1
+ORDER BY 3 DESC;
+```
+
+**Output**
+
+demographic  | total_sales  | sales_percentage
+--  |   --  | --
+Unknown  | 116067285533 | 41
+Families | 12759667763 | 32
+Couples | 10827663141 | 27
 
 
 
