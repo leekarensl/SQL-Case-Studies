@@ -212,6 +212,7 @@ year | pct_couples_sales | pct_families_sales  | pct_unknown_sales
 2019  | 27.28  | 32.47  | 40.25
 2020  | 28.72 | 32.73  | 38.55
 
+
 **8. What age-band and demographic values contribute most to Retail sales?**
 
 ```sql
