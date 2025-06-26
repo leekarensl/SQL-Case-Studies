@@ -318,6 +318,49 @@ period | sales_diff | sales_change
 -- | -- | --
 After | -26884188 | -1.15
 
+**2. What about the entire 12 weeks before and after?**
+
+```sql
+with cte as(
+SELECT
+  week_date,
+  SUM(sales) AS sales,
+  SUM(transactions) as transactions
+FROM data_mart.clean_weekly_sales
+WHERE week_date >= DATE_TRUNC('week', '2020-06-15'::DATE - INTERVAL '12 weeks')
+  AND week_date <= DATE_TRUNC('week', '2020-06-15'::DATE + INTERVAL '11 weeks')
+GROUP BY 1
+
+)
+,
+--select min(week_date), max(week_date) from cte;
+
+period_sales as(
+select
+  case
+    when week_date < '2020-06-15' then 'Before' else 'After' end as period,
+  sum(sales) as sales
+from cte
+group by 1)
+
+select * from(
+select
+  period,
+  sales - lag(sales) over (order by period desc) as sales_diff,
+  round((sales/ lag(sales) over (order by period desc) - 1) * 100 ,2) as sales_change
+from period_sales) subquery
+where sales_diff is not null;
+```
+
+**Output**
+period | sales_diff | sales_change
+-- | -- | --
+After | -152325394 | -2.14
+
+
+
+
+
 
 
 
