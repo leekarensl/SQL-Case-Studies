@@ -2,7 +2,7 @@
 ## The business questions and my SQL solutions:
 
 ### Part A Data Cleansing Steps
-**1. Generate a new table and call it clean_weekly_sales, convert the week_date to a date format, add a week_number, a month_number, a calendar_year column and a new column called age_band whwere segment 1 is Young Adults, segment 2 is Middle Aged and 3/4 are Retirees. If the segment contains C is its Couples and F is Families for a new demographic column. Also to create a new column called avg_transaction, rounded to 2 decimal places**
+**1. Generate a new table and call it clean_weekly_sales, convert the week_date to a date format, add a week_number, a month_number, a calendar_year column and a new column called age_band where segment 1 is Young Adults, segment 2 is Middle Aged and 3/4 are Retirees. If the segment contains C is its Couples and F is Families for a new demographic column. Also to create a new column called avg_transaction, rounded to 2 decimal places**
 
 ```sql
 drop table if exists data_mart.clean_weekly_sales;
@@ -254,6 +254,36 @@ demographic  | total_sales  | sales_percentage
 Unknown  | 116067285533 | 41
 Families | 12759667763 | 32
 Couples | 10827663141 | 27
+
+**9. Can we use the avg_transaction column to find the average transaction size for each year for Retail vs Shopify? If not - how would you calculate it instead?**
+
+```sql
+SELECT
+  calendar_year,
+  platform,
+  ROUND(AVG(avg_transaction),0) AS avg_avg_transaction,
+  SUM(sales) / SUM(transactions) AS avg_annual_transaction
+FROM data_mart.clean_weekly_sales
+GROUP BY
+  1,2
+ORDER BY
+  1,2;
+```
+**Output**
+
+calendar_year | platform | avg_avg_transaction | avg_annual_transaction
+-- |  -- | -- | --
+2018 | Retail | 42  | 36
+2018 | Shopify | 188  | 192
+-- | -- | -- | --
+2020 | Retail  | 40  | 36
+2020 | Shopify  | 174  | 179
+
+No because the avg_transaction column was calculated at row level and taking the average would produce the output of average of the average. The average transaction size for each platform for each calendar year is to be calculated as sum of sales divided by sum of transactions grouped at platform level. The output above shows the difference in figures between taking the average of averages versus calculating the sum of sales divided by sum of transactions at platform level for each year.
+
+
+
+
 
 
 
