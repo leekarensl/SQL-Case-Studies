@@ -1,3 +1,18 @@
+[Logo](DataMartLogo.png)
+
+# Case Study 5 - Danny's Diner
+*This case study is part of the 8 weeks SQL challenge which you can find details [here](https://8weeksqlchallenge.com/)
+
+## Introduction
+Data Mart is Danny’s latest venture, an international operations for his online supermarket that specialises in fresh produce. 
+
+## Problem Statement
+In June 2020 - large scale supply changes were made at Data Mart. All Data Mart products now use sustainable packaging methods in every single step from the farm all the way to the customer. Danny needs to quantify the impact of this change on the sales performance for Data Mart and it’s separate business areas.
+
+The key business questions he needs help answering are the following:
+1. What was the quantifiable impact of the changes introduced in June 2020?
+2. Which platform, region, segment and customer types were the most impacted by this change?
+3. What can we do about future introduction of similar sustainability updates to the business to minimise impact on sales?
 
 ## The business questions and my SQL solutions:
 
