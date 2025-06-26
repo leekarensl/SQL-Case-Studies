@@ -281,6 +281,44 @@ calendar_year | platform | avg_avg_transaction | avg_annual_transaction
 
 No because the avg_transaction column was calculated at row level and taking the average would produce the output of average of the average. The average transaction size for each platform for each calendar year is to be calculated as sum of sales divided by sum of transactions grouped at platform level. The output above shows the difference in figures between taking the average of averages versus calculating the sum of sales divided by sum of transactions at platform level for each year.
 
+### Part C Before and After Analysis
+**1. What is the total sales for the 4 weeks before and after 2020-06-15? What is the growth or reduction rate in actual values and percentage of sales?**
+
+```sql
+with cte as(
+SELECT
+  week_date,
+  SUM(sales) AS sales
+FROM data_mart.clean_weekly_sales
+WHERE week_date >= DATE_TRUNC('week', '2020-06-15'::DATE - INTERVAL '4 weeks')
+  AND week_date <= DATE_TRUNC('week', '2020-06-15'::DATE + INTERVAL '3 weeks')
+GROUP BY 1
+)
+,
+|
+period_sales as(
+select
+  case
+    when week_date < '2020-06-15' then 'Before' else 'After' end as period,
+  sum(sales) as sales
+from cte
+group by 1)
+
+select * from(
+select
+  period,
+  sales - lag(sales) over (order by period desc) as sales_diff,
+  round((sales/ lag(sales) over (order by period desc) - 1) * 100 ,2) as sales_change
+from period_sales) subquery
+where sales_diff is not null;
+```
+**Output**
+
+period | sales_diff | sales_change
+-- | -- | --
+After | -26884188 | -1.15
+
+
 
 
 
