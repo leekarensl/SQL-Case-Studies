@@ -357,6 +357,87 @@ period | sales_diff | sales_change
 -- | -- | --
 After | -152325394 | -2.14
 
+**3. How do the sale metrics for these 2 periods before and after compare with the previous years in 2018 and 2019?**
+
+```sql
+-- 4 week period, 2020-06-15 is week_number 25
+with cte as(
+SELECT
+  calendar_year,
+  week_number,
+  SUM(sales) AS sales
+FROM data_mart.clean_weekly_sales
+WHERE week_number between 21 and 28
+GROUP BY 1,2
+)
+,
+
+period_sales as(
+select
+  calendar_year,
+  case
+    when week_number < 25 then 'Before' else 'After' end as period,
+  sum(sales) as sales
+from cte
+group by 1,2)
+
+select * from(
+select
+  calendar_year,
+  sales - lag(sales) over (partition by calendar_year order by period desc) as sales_diff,
+  round((sales/ lag(sales) over (partition by calendar_year order by period desc) - 1) * 100 ,2) as sales_change
+from period_sales) subquery
+where sales_diff is not null
+order by 1;
+```
+
+**Output**
+calendar_year | sales_diff | sales_change
+-- | -- | --
+2018 | 4102105  | 0.19
+2019  | 2336594  | 0.10
+2020 | -26884188 | -1.15
+
+```sql
+-- 12 week period
+with cte as(
+SELECT
+  calendar_year,
+  week_number,
+  SUM(sales) AS sales
+FROM data_mart.clean_weekly_sales
+WHERE week_number between 13 and 36
+GROUP BY 1,2
+)
+,
+
+period_sales as(
+select
+  calendar_year,
+  case
+    when week_number < 25 then 'Before' else 'After' end as period,
+  sum(sales) as sales
+from cte
+group by 1,2)
+
+select * from(
+select
+  calendar_year,
+  sales - lag(sales) over (partition by calendar_year order by period desc) as sales_diff,
+  round((sales/ lag(sales) over (partition by calendar_year order by period desc) - 1) * 100 ,2) as sales_change
+from period_sales) subquery
+where sales_diff is not null
+order by 1;
+```
+
+**Output**
+calendar_year | sales_diff | sales_change
+-- | -- | --
+2018 | 104256193  | 1.63
+2019  | -20740294 | 0.30
+2020 | -152325394 | -2.14
+
+
 
 
 
