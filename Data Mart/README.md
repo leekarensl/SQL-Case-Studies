@@ -14,6 +14,16 @@ The key business questions he needs help answering are the following:
 2. Which platform, region, segment and customer types were the most impacted by this change?
 3. What can we do about future introduction of similar sustainability updates to the business to minimise impact on sales?
 
+## Available Data and Business Case
+Danny has shared the data design for Data Mart and the following column dictionary:
+
+![DataERD](DataMartERD.png)
+
+1. Data Mart has international operations using a multi-region strategy
+2. Data Mart has both, a retail and online platform in the form of a Shopify store front to serve their customers
+3. Customer segment and customer_type data relates to personal age and demographics information that is shared with Data Mart transactions is the count of unique purchases made through Data Mart and sales is the actual dollar amount of purchases
+4. Each record in the dataset is related to a specific aggregated slice of the underlying sales data rolled up into a week_date value which represents the start of the sales week.
+
 ## The business questions and my SQL solutions:
 
 ### Part A Data Cleansing Steps
